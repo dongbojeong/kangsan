@@ -13,7 +13,7 @@
         }
 
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: auto;
             background-color: white;
             padding: 20px;
@@ -59,6 +59,27 @@
         .result-section {
             margin-top: 20px;
         }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .result-table th, .result-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .result-table th {
+            background-color: #f2f2f2;
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -71,6 +92,9 @@
             <label for="priceRange">예가범위 (%):</label>
             <input type="number" id="priceRange" placeholder="예가범위 입력" step="0.01" required><br><br>
 
+            <label for="companyCount">예상입찰업체수:</label>
+            <input type="number" id="companyCount" placeholder="업체수 입력" required><br><br>
+
             <label for="bidRate">투찰율 (%):</label>
             <input type="number" id="bidRate" placeholder="투찰율 입력" step="0.01" required><br><br>
 
@@ -79,8 +103,25 @@
 
         <div class="result-section" id="result">
             <h2>계산 결과</h2>
-            <p id="drawPrices"></p>
-            <p id="estimatedPrices"></p>
+            <table class="result-table">
+                <thead>
+                    <tr>
+                        <th>추첨가격</th>
+                        <th>예상가 1</th>
+                        <th>예상가 2</th>
+                        <th>예상가 3</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td id="drawPrices"></td>
+                        <td id="estimatedPrice1"></td>
+                        <td id="estimatedPrice2"></td>
+                        <td id="estimatedPrice3"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <h3 class="highlight">비율</h3>
             <p id="ratios"></p>
         </div>
     </div>
@@ -97,17 +138,19 @@
             const baseAmountStr = document.getElementById("baseAmount").value.replace(/,/g, '');
             const baseAmount = parseFloat(baseAmountStr);
             const priceRange = parseFloat(document.getElementById("priceRange").value);
+            const companyCount = parseInt(document.getElementById("companyCount").value);
             const bidRate = parseFloat(document.getElementById("bidRate").value);
 
-            if (isNaN(baseAmount) || isNaN(priceRange) || isNaN(bidRate)) {
+            if (isNaN(baseAmount) || isNaN(priceRange) || isNaN(companyCount) || isNaN(bidRate)) {
                 alert("모든 값을 정확하게 입력하세요.");
                 return;
             }
 
-            // 15개의 추첨가격을 랜덤으로 생성 (예가범위 내에서)
+            // 15개의 추첨가격을 예가범위 내에서 생성 (오차 최소화)
             let drawPrices = [];
             for (let i = 0; i < 15; i++) {
-                const randomPrice = baseAmount * (1 + (Math.random() * (priceRange * 2) - priceRange) / 100);
+                const randomFactor = (Math.random() * (priceRange * 2) - priceRange) / 100;
+                const randomPrice = baseAmount * (1 + randomFactor);
                 drawPrices.push(randomPrice);
             }
 
@@ -131,9 +174,11 @@
             const ratio3 = (estimatedPrice3 / baseAmount * 100).toFixed(2);
 
             // 결과 표시
-            document.getElementById("drawPrices").innerText = `랜덤 추첨가격: ${selectedPrices.map(price => Math.round(price).toLocaleString()).join(' 원, ')} 원`;
-            document.getElementById("estimatedPrices").innerText = `예상가1: ${Math.round(estimatedPrice1).toLocaleString()} 원, 예상가2: ${Math.round(estimatedPrice2).toLocaleString()} 원, 예상가3: ${Math.round(estimatedPrice3).toLocaleString()} 원`;
-            document.getElementById("ratios").innerText = `비율: 예상가1: ${ratio1}%, 예상가2: ${ratio2}%, 예상가3: ${ratio3}%`;
+            document.getElementById("drawPrices").innerText = selectedPrices.map(price => Math.round(price).toLocaleString()).join(' 원, ');
+            document.getElementById("estimatedPrice1").innerText = Math.round(estimatedPrice1).toLocaleString() + " 원";
+            document.getElementById("estimatedPrice2").innerText = Math.round(estimatedPrice2).toLocaleString() + " 원";
+            document.getElementById("estimatedPrice3").innerText = Math.round(estimatedPrice3).toLocaleString() + " 원";
+            document.getElementById("ratios").innerText = `예상가 1: ${ratio1}%, 예상가 2: ${ratio2}%, 예상가 3: ${ratio3}%`;
         }
     </script>
 </body>
