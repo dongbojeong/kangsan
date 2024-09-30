@@ -28,7 +28,7 @@
 
         <!-- 입찰 보증금 계산 -->
         <div class="guarantee-section">
-            <h3>입찰 보증금 계산</h3>
+            <h3>입찰 보증기간 계산</h3>
             <form id="bid-calculator-form">
                 <label for="bid_type">입찰 유형:</label>
                 <select id="bid_type" required>
@@ -42,18 +42,18 @@
                 <label for="bid_start_date">입찰 보증금 초일 (입찰서 제출 마감일 이전):</label>
                 <input type="date" id="bid_start_date" required>
 
-                <button type="submit">입찰 보증금 만료일 계산</button>
+                <button type="submit">입찰 보증기간 만료일 계산</button>
             </form>
             <div id="bid-result" class="guarantee-result" style="display:none;">
-                <h4>입찰 보증금 초일: <span id="bid-start-date-result"></span></h4>
-                <h4>입찰 보증금 만료일: <span id="bid-end-date-result"></span></h4>
+                <h4>입찰 보증기간 초일: <span id="bid-start-date-result"></span></h4>
+                <h4>입찰 보증기간 만료일: <span id="bid-end-date-result"></span></h4>
                 <h4>보증기간(일수): <span id="bid-days-result"></span></h4>
             </div>
         </div>
 
         <!-- 계약 보증금 계산 -->
         <div class="guarantee-section">
-            <h3>계약 보증금 계산</h3>
+            <h3>계약 보증기간 계산</h3>
             <form id="contract-calculator-form">
                 <label for="contract_start_date">계약 기간 개시일:</label>
                 <input type="date" id="contract_start_date" required>
@@ -61,18 +61,18 @@
                 <label for="contract_period">계약 보증금 기간 (개월):</label>
                 <input type="number" id="contract_period" min="1" required>
                 
-                <button type="submit">계약 보증금 만료일 계산</button>
+                <button type="submit">계약 보증기간 만료일 계산</button>
             </form>
             <div id="contract-result" class="guarantee-result" style="display:none;">
-                <h4>계약 보증금 초일: <span id="contract-start-date-result"></span></h4>
-                <h4>계약 보증금 만료일: <span id="contract-end-date-result"></span></h4>
+                <h4>계약 보증기간 초일: <span id="contract-start-date-result"></span></h4>
+                <h4>계약 보증기간간 만료일: <span id="contract-end-date-result"></span></h4>
                 <h4>보증기간(일수): <span id="contract-days-result"></span></h4>
             </div>
         </div>
 
         <!-- 하자보수보증금 계산 -->
         <div class="guarantee-section">
-            <h3>하자보수보증금 계산</h3>
+            <h3>하자보수보증기간 계산</h3>
             <form id="defect-calculator-form">
                 <label for="acceptance_date">목적물 인수일:</label>
                 <input type="date" id="acceptance_date" required>
@@ -83,11 +83,11 @@
                 <label for="defect_responsibility_period">하자담보책임 기간 (개월):</label>
                 <input type="number" id="defect_responsibility_period" min="1" required>
                 
-                <button type="submit">하자보수보증금 만료일 계산</button>
+                <button type="submit">하자보수보증기간 만료일 계산</button>
             </form>
             <div id="defect-result" class="guarantee-result" style="display:none;">
-                <h4>하자보수보증금 초일: <span id="defect-start-date-result"></span></h4>
-                <h4>하자보수보증금 만료일: <span id="defect-end-date-result"></span></h4>
+                <h4>하자보수보증기간 초일: <span id="defect-start-date-result"></span></h4>
+                <h4>하자보수보증기간간 만료일: <span id="defect-end-date-result"></span></h4>
                 <h4>보증기간(일수): <span id="defect-days-result"></span></h4>
             </div>
         </div>
