@@ -1,0 +1,172 @@
+// 보증금 만료일 계산기 Shortcode 생성
+function guarantee_calculator_shortcode() {
+    ob_start();
+    ?>
+    <style>
+        .guarantee-section {
+            border: 2px solid #ccc;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        .guarantee-section h3 {
+            background-color: #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .guarantee-result {
+            margin-top: 20px;
+        }
+    </style>
+
+    <div id="guarantee-calculator">
+        <h2>보증기간 계산기</h2>
+
+        <!-- 입찰 보증금 계산 -->
+        <div class="guarantee-section">
+            <h3>입찰 보증금 계산</h3>
+            <form id="bid-calculator-form">
+                <label for="bid_type">입찰 유형:</label>
+                <select id="bid_type" required>
+                    <option value="general">일반 입찰</option>
+                    <option value="construction">공사 입찰</option>
+                </select>
+
+                <label for="submission_date">입찰서 제출 마감일:</label>
+                <input type="date" id="submission_date" required>
+
+                <label for="bid_start_date">입찰 보증금 초일 (입찰서 제출 마감일 이전):</label>
+                <input type="date" id="bid_start_date" required>
+
+                <button type="submit">입찰 보증금 만료일 계산</button>
+            </form>
+            <div id="bid-result" class="guarantee-result" style="display:none;">
+                <h4>입찰 보증금 초일: <span id="bid-start-date-result"></span></h4>
+                <h4>입찰 보증금 만료일: <span id="bid-end-date-result"></span></h4>
+                <h4>보증기간(일수): <span id="bid-days-result"></span></h4>
+            </div>
+        </div>
+
+        <!-- 계약 보증금 계산 -->
+        <div class="guarantee-section">
+            <h3>계약 보증금 계산</h3>
+            <form id="contract-calculator-form">
+                <label for="contract_start_date">계약 기간 개시일:</label>
+                <input type="date" id="contract_start_date" required>
+                
+                <label for="contract_period">계약 보증금 기간 (개월):</label>
+                <input type="number" id="contract_period" min="1" required>
+                
+                <button type="submit">계약 보증금 만료일 계산</button>
+            </form>
+            <div id="contract-result" class="guarantee-result" style="display:none;">
+                <h4>계약 보증금 초일: <span id="contract-start-date-result"></span></h4>
+                <h4>계약 보증금 만료일: <span id="contract-end-date-result"></span></h4>
+                <h4>보증기간(일수): <span id="contract-days-result"></span></h4>
+            </div>
+        </div>
+
+        <!-- 하자보수보증금 계산 -->
+        <div class="guarantee-section">
+            <h3>하자보수보증금 계산</h3>
+            <form id="defect-calculator-form">
+                <label for="acceptance_date">목적물 인수일:</label>
+                <input type="date" id="acceptance_date" required>
+                
+                <label for="inspection_date">준공검사 완료일:</label>
+                <input type="date" id="inspection_date" required>
+
+                <label for="defect_responsibility_period">하자담보책임 기간 (개월):</label>
+                <input type="number" id="defect_responsibility_period" min="1" required>
+                
+                <button type="submit">하자보수보증금 만료일 계산</button>
+            </form>
+            <div id="defect-result" class="guarantee-result" style="display:none;">
+                <h4>하자보수보증금 초일: <span id="defect-start-date-result"></span></h4>
+                <h4>하자보수보증금 만료일: <span id="defect-end-date-result"></span></h4>
+                <h4>보증기간(일수): <span id="defect-days-result"></span></h4>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 날짜 차이를 일수로 계산하는 함수
+        function calculateDaysBetween(startDate, endDate) {
+            const timeDiff = endDate - startDate;
+            const dayDiff = timeDiff / (1000 * 3600 * 24); // 밀리초를 일수로 변환
+            return Math.round(dayDiff);
+        }
+
+        // 입찰 보증금 계산기
+        document.getElementById('bid-calculator-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // 입력 값 가져오기
+            var bidStartDate = new Date(document.getElementById('bid_start_date').value);
+            var bidType = document.getElementById('bid_type').value;
+
+            // 입찰 유형에 따라 기간 설정 (일반 입찰: 30일, 공사 입찰: 90일)
+            var bidPeriod = (bidType === 'construction') ? 90 : 30;
+
+            // 보증금 만료일 계산
+            var bidEndDate = new Date(bidStartDate);
+            bidEndDate.setDate(bidEndDate.getDate() + bidPeriod);
+
+            // 보증기간(일수) 계산
+            var bidDays = calculateDaysBetween(bidStartDate, bidEndDate);
+
+            // 날짜 형식 지정 (yyyy-mm-dd)
+            var bidStartDateFormatted = bidStartDate.toISOString().split('T')[0];
+            var bidEndDateFormatted = bidEndDate.toISOString().split('T')[0];
+
+            // 결과 출력
+            document.getElementById('bid-start-date-result').textContent = bidStartDateFormatted;
+            document.getElementById('bid-end-date-result').textContent = bidEndDateFormatted;
+            document.getElementById('bid-days-result').textContent = bidDays + "일";
+            document.getElementById('bid-result').style.display = 'block';
+        });
+
+        // 계약 보증금 계산기
+        document.getElementById('contract-calculator-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // 입력 값 가져오기
+            var contractStartDate = new Date(document.getElementById('contract_start_date').value);
+            var contractPeriod = parseInt(document.getElementById('contract_period').value);
+
+            // 계약 보증금 만료일 계산
+            var contractEndDate = new Date(contractStartDate);
+            contractEndDate.setMonth(contractEndDate.getMonth() + contractPeriod);
+
+            // 보증기간(일수) 계산
+            var contractDays = calculateDaysBetween(contractStartDate, contractEndDate);
+
+            // 날짜 형식 지정 (yyyy-mm-dd)
+            var contractStartDateFormatted = contractStartDate.toISOString().split('T')[0];
+            var contractEndDateFormatted = contractEndDate.toISOString().split('T')[0];
+
+            // 결과 출력
+            document.getElementById('contract-start-date-result').textContent = contractStartDateFormatted;
+            document.getElementById('contract-end-date-result').textContent = contractEndDateFormatted;
+            document.getElementById('contract-days-result').textContent = contractDays + "일";
+            document.getElementById('contract-result').style.display = 'block';
+        });
+
+        // 하자보수보증금 계산기
+        document.getElementById('defect-calculator-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // 입력 값 가져오기
+            var acceptanceDate = new Date(document.getElementById('acceptance_date').value);
+            var inspectionDate = new Date(document.getElementById('inspection_date').value);
+            var defectResponsibilityPeriod = parseInt(document.getElementById('defect_responsibility_period').value);
+
+            // 하자보수보증금 초일: 목적물 인수일과 준공검사 완료일 중 더 빠른 날짜
+            var defectStartDate = (acceptanceDate < inspectionDate) ? acceptanceDate : inspectionDate;
+            var defectEndDate = new Date(defectStartDate);
+            defectEndDate.setMonth(defectEndDate.getMonth() + defectResponsibilityPeriod);
+
+            // 보증기간(일수) 계산
+            var defectDays = calculateDaysBetween(defectStartDate,
