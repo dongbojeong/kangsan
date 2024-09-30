@@ -106,27 +106,17 @@
             <table class="result-table">
                 <thead>
                     <tr>
+                        <th>순번</th>
                         <th>추첨가격</th>
-                        <th>예상가 1</th>
-                        <th>예상가 2</th>
-                        <th>예상가 3</th>
-                        <th>비율 1</th>
-                        <th>비율 2</th>
-                        <th>비율 3</th>
+                        <th>예상가</th>
+                        <th>비율</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td id="drawPrices"></td>
-                        <td id="estimatedPrice1"></td>
-                        <td id="estimatedPrice2"></td>
-                        <td id="estimatedPrice3"></td>
-                        <td id="ratio1"></td>
-                        <td id="ratio2"></td>
-                        <td id="ratio3"></td>
-                    </tr>
+                <tbody id="drawPriceRows">
                 </tbody>
             </table>
+            <h3>추첨가격 2, 추첨가격 3</h3>
+            <p id="extraPrices"></p>
         </div>
     </div>
 
@@ -177,14 +167,31 @@
             const ratio2 = (estimatedPrice2 / baseAmount * 100).toFixed(2);
             const ratio3 = (estimatedPrice3 / baseAmount * 100).toFixed(2);
 
-            // 결과 표시
-            document.getElementById("drawPrices").innerText = selectedPrices.map(price => Math.round(price).toLocaleString()).join(' 원, ');
-            document.getElementById("estimatedPrice1").innerText = Math.round(estimatedPrice1).toLocaleString() + " 원";
-            document.getElementById("estimatedPrice2").innerText = Math.round(estimatedPrice2).toLocaleString() + " 원";
-            document.getElementById("estimatedPrice3").innerText = Math.round(estimatedPrice3).toLocaleString() + " 원";
-            document.getElementById("ratio1").innerText = ratio1 + "%";
-            document.getElementById("ratio2").innerText = ratio2 + "%";
-            document.getElementById("ratio3").innerText = ratio3 + "%";
+            // 순번과 추첨가격 및 비율 표시
+            const drawPriceRows = document.getElementById("drawPriceRows");
+            drawPriceRows.innerHTML = `
+                <tr>
+                    <td>1</td>
+                    <td>${Math.round(estimatedPrice1).toLocaleString()} 원</td>
+                    <td>예상가 1</td>
+                    <td>${ratio1}%</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>${Math.round(estimatedPrice2).toLocaleString()} 원</td>
+                    <td>예상가 2</td>
+                    <td>${ratio2}%</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>${Math.round(estimatedPrice3).toLocaleString()} 원</td>
+                    <td>예상가 3</td>
+                    <td>${ratio3}%</td>
+                </tr>
+            `;
+
+            // 추가로 추첨가격 2, 3을 표시
+            document.getElementById("extraPrices").innerText = `추첨가격 2: ${Math.round(selectedPrices[2]).toLocaleString()} 원, 추첨가격 3: ${Math.round(selectedPrices[3]).toLocaleString()} 원`;
         }
     </script>
 </body>
