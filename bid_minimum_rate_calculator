@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>낙찰하한율 계산기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1, h2 {
+            text-align: center;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #result {
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>낙찰하한율 계산기</h1>
+        <form id="calcForm">
+            <label for="agency">발주처:</label>
+            <select id="agency" required>
+                <option value="0">발주처 선택</option>
+                <option value="1">조달청</option>
+                <option value="2">지방자치단체</option>
+                <option value="3">국가기관</option>
+            </select><br><br>
+
+            <label for="category">공사/계약 종류:</label>
+            <select id="category" required>
+                <option value="0">종류 선택</option>
+                <option value="facility">시설공사</option>
+                <option value="general">일반용역</option>
+                <option value="technical">기술용역</option>
+                <option value="purchase">물품구매</option>
+            </select><br><br>
+
+            <label for="variation">예가 변동폭 (%):</label>
+            <input type="number" id="variation" placeholder="예가 변동폭 입력" step="0.01" required><br><br>
+
+            <label for="baseAmount">기초금액 (원):</label>
+            <input type="text" id="baseAmount" placeholder="기초금액 입력" oninput="formatNumber(this)" required><br><br>
+
+            <button type="button" onclick="calculateRate()">계산하기</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // 천 단위 콤마 추가 함수
+        function formatNumber(input) {
+            let value = input.value.replace(/,/g, ''); // 기존 콤마 제거
+            input.value = Number(value).toLocaleString(); // 천 단위 콤마 추가
+        }
+
+        // 낙찰하한율 계산 로직
+        function calculateRate() {
+            const agency = document.getElementById("agency").value;
+            const category = document.getElementById("category").value;
+            const variation = parseFloat(document.getElementById("variation").value);
+            const baseAmountStr = document.getElementById("baseAmount").value.replace(/,/g, '');
+            const baseAmount = parseFloat(baseAmountStr);
+
+            if (agency == "0" || category == "0" || isNaN(variation) || isNaN(baseAmount)) {
+                alert("모든 값을 정확하게 입력하세요.");
+                return;
+            }
+
+            // 발주처별 변동폭 기본값 설정
+            let minRate, maxRate;
+            switch (agency) {
+                case "1": // 조달청
+                    minRate = 87.745;
+                    maxRate = 89.745;
+                    break;
+                case "2": // 지방자치단체
+                    minRate = 85.5;
+                    maxRate = 88;
+                    break;
+                case "3": // 국가기관
+                    minRate = 86;
+                    maxRate = 89;
+                    break;
+                default:
+                    alert("발주처를 선택하세요.");
+                    return;
+            }
+
+            // 공사/계약 종류에 따른 추가 요율 조정
+            let adjustment = 0;
+            switch (category) {
+                case "facility":
+                    adjustment = 0.5;
+                    break;
+                case "general":
+                    adjustment = 0.3;
+                    break;
+                case "technical":
+                    adjustment = 0.4;
+                    break;
+                case "purchase":
+                    adjustment = 0.2;
+                    break;
+                default:
+                    alert("공사/계약 종류를 선택하세요.");
+                    return;
+            }
+
+            // 예가 변동폭을 고려한 낙찰하한율 계산
+            let adjustedRate = minRate + variation * adjustment;
+
+            // 상한선 범위를 넘지 않도록 조정
+            if (adjustedRate > maxRate) {
+                adjustedRate = maxRate;
+            }
+
+            // 결과 표시
+            document.getElementById("result").innerText = `계산된 낙찰하한율: ${adjustedRate.toFixed(2)}%`;
+        }
+    </script>
+</body>
+</html>
