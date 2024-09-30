@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> 투찰 계산기</title>
+    <title>추첨가격 및 예상가 계산기</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -63,16 +63,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>추첨가격 및 낙찰하한선 계산기</h1>
+        <h1>추첨가격 및 예상가 계산기</h1>
         <form id="calcForm">
             <label for="baseAmount">기초금액 (원):</label>
-            <input type="number" id="baseAmount" placeholder="기초금액 입력" required><br><br>
+            <input type="text" id="baseAmount" placeholder="기초금액 입력" oninput="formatNumber(this)" required><br><br>
 
             <label for="priceRange">예가범위 (%):</label>
             <input type="number" id="priceRange" placeholder="예가범위 입력" step="0.01" required><br><br>
-
-            <label for="companyCount">예상입찰업체수:</label>
-            <input type="number" id="companyCount" placeholder="업체수 입력" required><br><br>
 
             <label for="bidRate">투찰율 (%):</label>
             <input type="number" id="bidRate" placeholder="투찰율 입력" step="0.01" required><br><br>
@@ -82,50 +79,62 @@
 
         <div class="result-section" id="result">
             <h2>계산 결과</h2>
-            <p id="drawPrice"></p>
-            <p id="range"></p>
-            <p id="drawCount"></p>
-            <p id="drawResult"></p>
-            <p id="lowerLimit"></p>
+            <p id="drawPrices"></p>
+            <p id="estimatedPrices"></p>
+            <p id="ratios"></p>
         </div>
     </div>
 
     <script>
+        // 천 단위 콤마 추가 함수
+        function formatNumber(input) {
+            let value = input.value.replace(/,/g, ''); // 기존 콤마 제거
+            input.value = Number(value).toLocaleString(); // 천 단위 콤마 추가
+        }
+
+        // 결과 계산 함수
         function calculateResults() {
-            const baseAmount = parseFloat(document.getElementById("baseAmount").value);
+            const baseAmountStr = document.getElementById("baseAmount").value.replace(/,/g, '');
+            const baseAmount = parseFloat(baseAmountStr);
             const priceRange = parseFloat(document.getElementById("priceRange").value);
-            const companyCount = parseInt(document.getElementById("companyCount").value);
             const bidRate = parseFloat(document.getElementById("bidRate").value);
 
-            if (isNaN(baseAmount) || isNaN(priceRange) || isNaN(companyCount) || isNaN(bidRate)) {
+            if (isNaN(baseAmount) || isNaN(priceRange) || isNaN(bidRate)) {
                 alert("모든 값을 정확하게 입력하세요.");
                 return;
             }
 
-            // 예가범위 계산 (± 범위 계산)
-            const lowerLimit = baseAmount * (1 - priceRange / 100);
-            const upperLimit = baseAmount * (1 + priceRange / 100);
+            // 15개의 추첨가격을 랜덤으로 생성 (예가범위 내에서)
+            let drawPrices = [];
+            for (let i = 0; i < 15; i++) {
+                const randomPrice = baseAmount * (1 + (Math.random() * (priceRange * 2) - priceRange) / 100);
+                drawPrices.push(randomPrice);
+            }
 
-            // 추첨가격 계산 (임의로 투찰율에 따른 추정값 적용)
-            const drawPrice = baseAmount * (bidRate / 100);
+            // 랜덤으로 4개의 추첨가격 선택
+            let selectedPrices = [];
+            while (selectedPrices.length < 4) {
+                const randomIndex = Math.floor(Math.random() * drawPrices.length);
+                selectedPrices.push(drawPrices[randomIndex]);
+                drawPrices.splice(randomIndex, 1); // 중복 방지
+            }
 
-            // 추첨횟수 계산 (임의로 업체수에 비례하여 추정)
-            const drawCount = Math.ceil(companyCount / 10);  // 추첨횟수는 업체 수에 따라 비례적 증가
+            // 예상가 1, 2, 3은 선택된 4개의 가격 중 상위 3개
+            selectedPrices.sort((a, b) => b - a); // 높은 순서대로 정렬
+            const estimatedPrice1 = selectedPrices[0];
+            const estimatedPrice2 = selectedPrices[1];
+            const estimatedPrice3 = selectedPrices[2];
 
-            // 추첨예가 계산
-            const drawResult = (lowerLimit + upperLimit) / 2;
+            // 비율 계산
+            const ratio1 = (estimatedPrice1 / baseAmount * 100).toFixed(2);
+            const ratio2 = (estimatedPrice2 / baseAmount * 100).toFixed(2);
+            const ratio3 = (estimatedPrice3 / baseAmount * 100).toFixed(2);
 
-            // 낙찰하한선 계산 (임의로 85%로 설정)
-            const lowerBidLimit = baseAmount * 0.85;
-
-            // 결과를 표시
-            document.getElementById("drawPrice").innerText = `추첨가격: ${Math.round(drawPrice).toLocaleString()} 원`;
-            document.getElementById("range").innerText = `예가범위: ${Math.round(lowerLimit).toLocaleString()} 원 ~ ${Math.round(upperLimit).toLocaleString()} 원`;
-            document.getElementById("drawCount").innerText = `추첨횟수: ${drawCount} 회`;
-            document.getElementById("drawResult").innerText = `추첨예가: ${Math.round(drawResult).toLocaleString()} 원`;
-            document.getElementById("lowerLimit").innerText = `낙찰하한선: ${Math.round(lowerBidLimit).toLocaleString()} 원`;
+            // 결과 표시
+            document.getElementById("drawPrices").innerText = `랜덤 추첨가격: ${selectedPrices.map(price => Math.round(price).toLocaleString()).join(' 원, ')} 원`;
+            document.getElementById("estimatedPrices").innerText = `예상가1: ${Math.round(estimatedPrice1).toLocaleString()} 원, 예상가2: ${Math.round(estimatedPrice2).toLocaleString()} 원, 예상가3: ${Math.round(estimatedPrice3).toLocaleString()} 원`;
+            document.getElementById("ratios").innerText = `비율: 예상가1: ${ratio1}%, 예상가2: ${ratio2}%, 예상가3: ${ratio3}%`;
         }
     </script>
 </body>
 </html>
-
