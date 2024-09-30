@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>낙찰금액 계산기</title>
+    <title>추첨가격 및 낙찰하한선 계산기</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -51,48 +51,79 @@
         }
 
         #result {
-            font-size: 20px;
+            font-size: 18px;
             color: #333;
             text-align: center;
+        }
+
+        .result-section {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>낙찰금액 계산기</h1>
-        <form id="bidForm">
+        <h1>추첨가격 및 낙찰하한선 계산기</h1>
+        <form id="calcForm">
             <label for="baseAmount">기초금액 (원):</label>
             <input type="number" id="baseAmount" placeholder="기초금액 입력" required><br><br>
 
-            <label for="threshold">낙찰하한율 (%):</label>
-            <input type="number" id="threshold" placeholder="낙찰하한율 입력" step="0.01" required><br><br>
+            <label for="priceRange">예가범위 (%):</label>
+            <input type="number" id="priceRange" placeholder="예가범위 입력" step="0.01" required><br><br>
 
-            <button type="button" onclick="calculateBid()">계산하기</button>
+            <label for="companyCount">예상입찰업체수:</label>
+            <input type="number" id="companyCount" placeholder="업체수 입력" required><br><br>
+
+            <label for="bidRate">투찰율 (%):</label>
+            <input type="number" id="bidRate" placeholder="투찰율 입력" step="0.01" required><br><br>
+
+            <button type="button" onclick="calculateResults()">계산하기</button>
         </form>
 
-        <h2>계산된 낙찰금액:</h2>
-        <p id="result"></p>
+        <div class="result-section" id="result">
+            <h2>계산 결과</h2>
+            <p id="drawPrice"></p>
+            <p id="range"></p>
+            <p id="drawCount"></p>
+            <p id="drawResult"></p>
+            <p id="lowerLimit"></p>
+        </div>
     </div>
 
     <script>
-        function calculateBid() {
-            // 입력된 기초금액과 낙찰하한율을 가져옴
+        function calculateResults() {
             const baseAmount = parseFloat(document.getElementById("baseAmount").value);
-            const threshold = parseFloat(document.getElementById("threshold").value);
+            const priceRange = parseFloat(document.getElementById("priceRange").value);
+            const companyCount = parseInt(document.getElementById("companyCount").value);
+            const bidRate = parseFloat(document.getElementById("bidRate").value);
 
-            if (isNaN(baseAmount) || isNaN(threshold)) {
-                alert("유효한 값을 입력하세요.");
+            if (isNaN(baseAmount) || isNaN(priceRange) || isNaN(companyCount) || isNaN(bidRate)) {
+                alert("모든 값을 정확하게 입력하세요.");
                 return;
             }
 
-            // 낙찰하한율을 백분율에서 소수로 변환
-            const thresholdDecimal = threshold / 100;
+            // 예가범위 계산 (± 범위 계산)
+            const lowerLimit = baseAmount * (1 - priceRange / 100);
+            const upperLimit = baseAmount * (1 + priceRange / 100);
 
-            // 낙찰금액 계산
-            const bidPrice = baseAmount * thresholdDecimal;
+            // 추첨가격 계산 (임의로 투찰율에 따른 추정값 적용)
+            const drawPrice = baseAmount * (bidRate / 100);
 
-            // 계산 결과를 소수 첫째 자리에서 반올림하여 표시
-            document.getElementById("result").innerText = `낙찰금액: ${Math.round(bidPrice).toLocaleString()} 원`;
+            // 추첨횟수 계산 (임의로 업체수에 비례하여 추정)
+            const drawCount = Math.ceil(companyCount / 10);  // 추첨횟수는 업체 수에 따라 비례적 증가
+
+            // 추첨예가 계산
+            const drawResult = (lowerLimit + upperLimit) / 2;
+
+            // 낙찰하한선 계산 (임의로 85%로 설정)
+            const lowerBidLimit = baseAmount * 0.85;
+
+            // 결과를 표시
+            document.getElementById("drawPrice").innerText = `추첨가격: ${Math.round(drawPrice).toLocaleString()} 원`;
+            document.getElementById("range").innerText = `예가범위: ${Math.round(lowerLimit).toLocaleString()} 원 ~ ${Math.round(upperLimit).toLocaleString()} 원`;
+            document.getElementById("drawCount").innerText = `추첨횟수: ${drawCount} 회`;
+            document.getElementById("drawResult").innerText = `추첨예가: ${Math.round(drawResult).toLocaleString()} 원`;
+            document.getElementById("lowerLimit").innerText = `낙찰하한선: ${Math.round(lowerBidLimit).toLocaleString()} 원`;
         }
     </script>
 </body>
