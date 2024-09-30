@@ -84,7 +84,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>추첨가격 및 예상가 계산기</h1>
+        <h1>투찰 가격 계산기</h1>
         <form id="calcForm">
             <label for="baseAmount">기초금액 (원):</label>
             <input type="text" id="baseAmount" placeholder="기초금액 입력" oninput="formatNumber(this)" required><br><br>
@@ -110,6 +110,9 @@
                         <th>예상가 1</th>
                         <th>예상가 2</th>
                         <th>예상가 3</th>
+                        <th>비율 1</th>
+                        <th>비율 2</th>
+                        <th>비율 3</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -118,11 +121,12 @@
                         <td id="estimatedPrice1"></td>
                         <td id="estimatedPrice2"></td>
                         <td id="estimatedPrice3"></td>
+                        <td id="ratio1"></td>
+                        <td id="ratio2"></td>
+                        <td id="ratio3"></td>
                     </tr>
                 </tbody>
             </table>
-            <h3 class="highlight">비율</h3>
-            <p id="ratios"></p>
         </div>
     </div>
 
@@ -178,7 +182,9 @@
             document.getElementById("estimatedPrice1").innerText = Math.round(estimatedPrice1).toLocaleString() + " 원";
             document.getElementById("estimatedPrice2").innerText = Math.round(estimatedPrice2).toLocaleString() + " 원";
             document.getElementById("estimatedPrice3").innerText = Math.round(estimatedPrice3).toLocaleString() + " 원";
-            document.getElementById("ratios").innerText = `예상가 1: ${ratio1}%, 예상가 2: ${ratio2}%, 예상가 3: ${ratio3}%`;
+            document.getElementById("ratio1").innerText = ratio1 + "%";
+            document.getElementById("ratio2").innerText = ratio2 + "%";
+            document.getElementById("ratio3").innerText = ratio3 + "%";
         }
     </script>
 </body>
