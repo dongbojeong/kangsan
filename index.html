@@ -1,7 +1,9 @@
-// 보증금 만료일 계산기 Shortcode 생성
-function guarantee_calculator_shortcode() {
-    ob_start();
-    ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guarantee Calculator</title>
     <style>
         .guarantee-section {
             border: 2px solid #ccc;
@@ -19,7 +21,8 @@ function guarantee_calculator_shortcode() {
             margin-top: 20px;
         }
     </style>
-
+</head>
+<body>
     <div id="guarantee-calculator">
         <h2>보증기간 계산기</h2>
 
@@ -169,5 +172,23 @@ function guarantee_calculator_shortcode() {
             defectEndDate.setMonth(defectEndDate.getMonth() + defectResponsibilityPeriod);
 
             // 보증기간(일수) 계산
-            var defectDays = calculateDaysBetween(defectStartDate,
+            var defectDays = calculateDaysBetween(defectStartDate, defectEndDate);
 
+            // 날짜 형식 지정 (yyyy-mm-dd)
+            var defectStartDateFormatted = defectStartDate.toISOString().split('T')[0];
+            var defectEndDateFormatted = defectEndDate.toISOString().split('T')[0];
+
+            // 결과 출력
+            document.getElementById('defect-start-date-result').textContent = defectStartDateFormatted;
+            document.getElementById('defect-end-date-result').textContent = defectEndDateFormatted;
+            document.getElementById('defect-days-result').textContent = defectDays + "일";
+            document.getElementById('defect-result').style.display = 'block';
+        });
+    });
+    </script>
+</body>
+</html>
+
+    
+
+        
