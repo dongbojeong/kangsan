@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="ko">
 <head>
-    <title>복수예가 산출 프로그램</title>
+    <title>모두입찰 - 복수예가 산출 프로그램</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
@@ -32,14 +32,11 @@
         .btn:hover {
             background-color: #45a049;
         }
-        .radio-btn {
-            margin-right: 10px;
-        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>투찰 산출 계산기</h1>
+    <h1>모두입찰 - 복수예가 산출 프로그램</h1>
     <table>
         <tr>
             <th>기초금액 입력</th>
@@ -75,6 +72,8 @@
 </div>
 
 <script>
+let estimateList = [];
+
 function calculateEstimates() {
     const basePrice = parseFloat(document.getElementById('basePrice').value);
     const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
@@ -101,24 +100,13 @@ function calculateEstimates() {
     // 예가 범위 선택
     const selectedRange = parseFloat(document.getElementById('rangeSelector').value);
 
-    const estimateList = [];
+    estimateList = [];
     for (let i = 0; i < 15; i++) {
         const variation = Math.random() * (selectedRange * 2) - selectedRange;  // -selectedRange ~ +selectedRange 범위
         const estimate = basePrice * (1 + variation);
         estimateList.push(Math.round(estimate));
     }
     displayEstimates(estimateList);
-
-    // 자동으로 예가 선택 후 낙찰 금액 산출
-    const selectedEstimates = selectEstimates(estimateList);
-    const finalPrice = calculateFinalPrice(selectedEstimates, lowerBound);
-
-    if (finalPrice < basePrice * (lowerBound / 100)) {
-        alert('최종 낙찰 금액이 낙찰하한율 이하로 내려갈 수 없습니다.');
-        document.getElementById('finalPrice').innerText = "계산 불가";
-    } else {
-        document.getElementById('finalPrice').innerText = `${finalPrice.toLocaleString()} 원`;
-    }
 }
 
 function displayEstimates(estimateList) {
@@ -126,34 +114,47 @@ function displayEstimates(estimateList) {
     estimateListElem.innerHTML = '';
     estimateList.forEach((estimate, index) => {
         const li = document.createElement('li');
-        li.innerText = `예비가격 ${index + 1}: ${estimate.toLocaleString()} 원`;
+        li.innerHTML = `<input type="checkbox" class="estimate-checkbox" value="${estimate}"> 예비가격 ${index + 1}: ${estimate.toLocaleString()} 원`;
         estimateListElem.appendChild(li);
     });
 }
 
-function selectEstimates(estimateList) {
-    return estimateList.slice(0, 4);  // 자동으로 상위 4개의 예비가격 선택
-}
-
 function manualSelect() {
-    const estimateListElem = document.getElementById('estimateList');
-    let selectedEstimates = [];
-    // 임의로 사용자가 예가를 4개 선택하도록 구현
-    selectedEstimates = estimateListElem.children.length >= 4 ? [...estimateListElem.children].slice(0, 4).map(item => parseInt(item.innerText.split(":")[1].replace(/,/g, ''))) : [];
-    alert('4개의 예가를 선택했습니다.');
+    const checkboxes = document.querySelectorAll('.estimate-checkbox:checked');
+    if (checkboxes.length !== 4) {
+        alert('4개의 예비가격을 선택해주세요.');
+        return;
+    }
+    
+    const selectedEstimates = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
+    const lowerBound = selectedLowerBound.value === 'custom' 
+        ? parseFloat(document.getElementById('customLowerBound').value) 
+        : parseFloat(selectedLowerBound.value);
+
+    calculateFinalPrice(selectedEstimates, lowerBound);
 }
 
 function autoSelect() {
-    const estimateListElem = document.getElementById('estimateList');
-    let selectedEstimates = [];
-    // 자동으로 상위 4개의 예비가격을 선택
-    selectedEstimates = estimateListElem.children.length >= 4 ? [...estimateListElem.children].slice(0, 4).map(item => parseInt(item.innerText.split(":")[1].replace(/,/g, ''))) : [];
-    alert('자동으로 상위 4개의 예가를 선택했습니다.');
+    const selectedEstimates = estimateList.slice(0, 4);  // 자동으로 상위 4개의 예비가격 선택
+    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
+    const lowerBound = selectedLowerBound.value === 'custom' 
+        ? parseFloat(document.getElementById('customLowerBound').value) 
+        : parseFloat(selectedLowerBound.value);
+
+    calculateFinalPrice(selectedEstimates, lowerBound);
 }
 
 function calculateFinalPrice(estimates, lowerBound) {
     const averageEstimate = estimates.reduce((acc, price) => acc + price, 0) / estimates.length;
-    return Math.round(averageEstimate * (lowerBound / 100));
+    const finalPrice = Math.round(averageEstimate * (lowerBound / 100));
+
+    if (finalPrice < Math.min(...estimates) * (lowerBound / 100)) {
+        alert('최종 낙찰 금액이 낙찰하한율 이하로 내려갈 수 없습니다.');
+        document.getElementById('finalPrice').innerText = "계산 불가";
+    } else {
+        document.getElementById('finalPrice').innerText = `${finalPrice.toLocaleString()} 원`;
+    }
 }
 </script>
 </body>
