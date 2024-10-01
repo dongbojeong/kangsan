@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지체상금 계산기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1, h3 {
+            text-align: center;
+        }
+
+        label, select, input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>지체상금 계산기</h1>
+        <h3>계약 금액 및 지체 일수에 따른 지체상금 계산</h3>
+
+        <label for="contractAmount">계약 금액 (원):</label>
+        <input type="text" id="contractAmount" name="contractAmount" placeholder="계약 금액 입력" oninput="formatNumber(this)">
+        
+        <label for="delayDays">지체 일수 (일):</label>
+        <input type="number" id="delayDays" name="delayDays" placeholder="지체 일수 입력">
+
+        <label for="contractType">계약 구분:</label>
+        <select id="contractType">
+            <option value="공사">공사</option>
+            <option value="물품 제조">물품의 제조, 구매</option>
+            <option value="물품 수리">물품의 수리, 가공, 대여, 용역</option>
+            <option value="군용 음식">군용 음식, 식품 제조·구매</option>
+            <option value="운송 보관">운송·보관 및 양육 가공</option>
+        </select>
+
+        <label for="contractLaw">계약법 선택:</label>
+        <select id="contractLaw">
+            <option value="국가계약법">국가계약법</option>
+            <option value="지방계약법">지방계약법</option>
+        </select>
+
+        <button onclick="calculateLateFee()">지체상금 계산</button>
+
+        <p id="result"></p>
+    </div>
+
+    <script>
+        // 천 단위 쉼표 표시 함수
+        function formatNumber(input) {
+            var value = input.value.replace(/,/g, '');  // 쉼표 제거
+            input.value = Number(value).toLocaleString();  // 쉼표 추가
+        }
+
+        // 지체상금 계산 함수
+        function calculateLateFee() {
+            var contractAmount = document.getElementById("contractAmount").value.replace(/,/g, '');  // 쉼표 제거 후 금액 가져오기
+            var delayDays = document.getElementById("delayDays").value;
+            var contractType = document.getElementById("contractType").value;
+            var contractLaw = document.getElementById("contractLaw").value;
+            var lateFeeRate = 0;  // 지체상금 요율
+            var lateFee = 0;
+
+            if (contractAmount === '' || isNaN(contractAmount) || delayDays === '' || isNaN(delayDays)) {
+                document.getElementById("result").innerHTML = "계약 금액과 지체 일수를 정확히 입력해 주세요.";
+                return;
+            }
+
+            contractAmount = parseFloat(contractAmount);  // 계약 금액을 숫자로 변환
+            delayDays = parseFloat(delayDays);  // 지체 일수를 숫자로 변환
+
+            // 계약 구분 및 계약법에 따른 지체상금 요율 설정
+            if (contractLaw === "국가계약법") {
+                if (contractType === "공사") {
+                    lateFeeRate = 0.0005;  // 공사 요율 (0.05%)
+                } else if (contractType === "물품 제조") {
+                    lateFeeRate = 0.00075;  // 물품의 제조, 구매 (0.075%)
+                } else if (contractType === "물품 수리") {
+                    lateFeeRate = 0.00125;  // 물품의 수리, 가공, 대여, 용역 (0.125%)
+                } else if (contractType === "군용 음식") {
+                    lateFeeRate = 0.0015;  // 군용 음식, 식품 제조·구매 (0.15%)
+                } else if (contractType === "운송 보관") {
+                    lateFeeRate = 0.0025;  // 운송·보관 및 양육 가공 (0.25%)
+                }
+            } else if (contractLaw === "지방계약법") {
+                if (contractType === "공사") {
+                    lateFeeRate = 0.0005;  // 지방계약법도 동일 요율
+                } else if (contractType === "물품 제조") {
+                    lateFeeRate = 0.0008;  // 물품의 제조, 구매 (0.08%)
+                } else if (contractType === "물품 수리") {
+                    lateFeeRate = 0.0013;  // 물품의 수리, 가공, 대여, 용역 (0.13%)
+                } else if (contractType === "군용 음식") {
+                    lateFeeRate = 0.0015;  // 군용 음식 (지방계약법에서는 없음, 국가계약법 동일)
+                } else if (contractType === "운송 보관") {
+                    lateFeeRate = 0.0025;  // 운송·보관 (0.25%)
+                }
+            }
+
+            // 지체상금 계산 (계약 금액 * 지체 요율 * 지체 일수)
+            lateFee = contractAmount * lateFeeRate * delayDays;
+
+            // 금액에 쉼표 추가하는 함수
+            function numberWithCommas(x) {
+                return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+
+            // 결과 출력
+            document.getElementById("result").innerHTML =
+                "계약 금액: " + numberWithCommas(contractAmount.toFixed(0)) + " 원<br>" +
+                "지체 일수: " + delayDays + " 일<br>" +
+                "지체상금 (" + (lateFeeRate * 1000) + "/1000 요율): " + numberWithCommas(lateFee.toFixed(0)) + " 원";
+        }
+    </script>
+</body>
+</html>
