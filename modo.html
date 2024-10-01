@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>복수예가 계산기</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>복수예가 계산기</h1>
+    <div class="container">
+        <label for="baseAmount">기초 금액:</label>
+        <input type="number" id="baseAmount" placeholder="기초 금액을 입력하세요">
+        
+        <label for="lowerLimit">낙찰 하한율(%):</label>
+        <input type="number" id="lowerLimit" placeholder="낙찰 하한율을 입력하세요">
+        
+        <label for="upperLimit">낙찰 상한율(%):</label>
+        <input type="number" id="upperLimit" placeholder="낙찰 상한율을 입력하세요">
+        
+        <button id="calculateBtn">계산하기</button>
+        <div id="result"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
