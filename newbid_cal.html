@@ -15,10 +15,10 @@
             width: 100%;
             margin-bottom: 20px;
             border-collapse: collapse;
+            text-align: left;
         }
         th, td {
             padding: 10px;
-            text-align: left;
             border-bottom: 1px solid #ddd;
         }
         .btn {
@@ -36,7 +36,7 @@
 </head>
 <body>
 <div class="container">
-    <h1> 투찰가격 예상 계산기</h1>
+    <h1>투찰 예상 가격 산출 계산기</h1>
     <table>
         <tr>
             <th>기초금액 입력</th>
@@ -63,7 +63,17 @@
     </table>
     <button class="btn" onclick="calculateEstimates()">예가 산출</button>
     <h3>산출된 복수예비가격:</h3>
-    <ul id="estimateList"></ul>
+    <table id="estimateTable">
+        <thead>
+            <tr>
+                <th>예비가격 번호</th>
+                <th>예비가격 (원)</th>
+                <th>기초금액 대비 비율 (%)</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
     <h3>최종 낙찰 가능 금액:</h3>
     <p id="finalPrice"></p>
     <h3>복수예비가격 선택:</h3>
@@ -106,16 +116,22 @@ function calculateEstimates() {
         const estimate = basePrice * (1 + variation);
         estimateList.push(Math.round(estimate));
     }
-    displayEstimates(estimateList);
+    displayEstimates(estimateList, basePrice);
 }
 
-function displayEstimates(estimateList) {
-    const estimateListElem = document.getElementById('estimateList');
-    estimateListElem.innerHTML = '';
+function displayEstimates(estimateList, basePrice) {
+    const estimateTableBody = document.querySelector('#estimateTable tbody');
+    estimateTableBody.innerHTML = '';
     estimateList.forEach((estimate, index) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<input type="checkbox" class="estimate-checkbox" value="${estimate}"> 예비가격 ${index + 1}: ${estimate.toLocaleString()} 원`;
-        estimateListElem.appendChild(li);
+        const row = document.createElement('tr');
+        const rate = ((estimate / basePrice) * 100).toFixed(2);  // 기초금액 대비 비율 계산
+
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${estimate.toLocaleString()} 원</td>
+            <td>${rate}%</td>
+        `;
+        estimateTableBody.appendChild(row);
     });
 }
 
@@ -149,11 +165,14 @@ function calculateFinalPrice(estimates, lowerBound) {
     const averageEstimate = estimates.reduce((acc, price) => acc + price, 0) / estimates.length;
     const finalPrice = Math.round(averageEstimate * (lowerBound / 100));
 
+    const basePrice = parseFloat(document.getElementById('basePrice').value);
+    const finalRate = ((finalPrice / basePrice) * 100).toFixed(2);  // 기초금액 대비 비율 계산
+
     if (finalPrice < Math.min(...estimates) * (lowerBound / 100)) {
         alert('최종 낙찰 금액이 낙찰하한율 이하로 내려갈 수 없습니다.');
         document.getElementById('finalPrice').innerText = "계산 불가";
     } else {
-        document.getElementById('finalPrice').innerText = `${finalPrice.toLocaleString()} 원`;
+        document.getElementById('finalPrice').innerHTML = `${finalPrice.toLocaleString()} 원 (${finalRate}%)`;
     }
 }
 </script>
