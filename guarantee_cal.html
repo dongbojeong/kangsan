@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guarantee Calculator</title>
+    <title>Guarantee Period Calculator</title>
     <style>
         .guarantee-section {
             border: 2px solid #ccc;
@@ -12,17 +13,21 @@
             border-radius: 10px;
             background-color: #f9f9f9;
         }
+
         .guarantee-section h3 {
             background-color: #ddd;
             padding: 10px;
             border-radius: 5px;
         }
+
         .guarantee-result {
             margin-top: 20px;
         }
     </style>
 </head>
+
 <body>
+
     <div id="guarantee-calculator">
         <h2>보증기간 계산기</h2>
 
@@ -30,21 +35,16 @@
         <div class="guarantee-section">
             <h3>입찰 보증기간 계산</h3>
             <form id="bid-calculator-form">
-                <label for="bid_type">입찰 유형:</label>
-                <select id="bid_type" required>
-                    <option value="general">일반 입찰</option>
-                    <option value="construction">공사 입찰</option>
-                </select>
-
-                <label for="submission_date">입찰서 제출 마감일:</label>
-                <input type="date" id="submission_date" required>
-
-                <label for="bid_start_date">입찰 보증금 초일 (입찰서 제출 마감일 이전):</label>
+                <label for="bid_start_date">입찰서 제출 마감일:</label>
                 <input type="date" id="bid_start_date" required>
+
+                <label for="bid_period_days">보증기간 (일수):</label>
+                <input type="number" id="bid_period_days" min="1" required>
 
                 <button type="submit">입찰 보증기간 만료일 계산</button>
             </form>
-            <div id="bid-result" class="guarantee-result" style="display:none;">
+
+            <div id="bid-result" class="guarantee-result">
                 <h4>입찰 보증기간 초일: <span id="bid-start-date-result"></span> (<span id="bid-start-day-result"></span>)</h4>
                 <h4>입찰 보증기간 만료일: <span id="bid-end-date-result"></span> (<span id="bid-end-day-result"></span>)</h4>
                 <h4>보증기간(일수): <span id="bid-days-result"></span></h4>
@@ -58,12 +58,13 @@
                 <label for="contract_start_date">계약 기간 개시일:</label>
                 <input type="date" id="contract_start_date" required>
 
-                <label for="contract_period">계약 보증금 기간 (개월):</label>
-                <input type="number" id="contract_period" min="1" required>
+                <label for="contract_period_days">계약 보증금 기간 (일수):</label>
+                <input type="number" id="contract_period_days" min="1" required>
 
                 <button type="submit">계약 보증기간 만료일 계산</button>
             </form>
-            <div id="contract-result" class="guarantee-result" style="display:none;">
+
+            <div id="contract-result" class="guarantee-result">
                 <h4>계약 보증기간 초일: <span id="contract-start-date-result"></span> (<span id="contract-start-day-result"></span>)</h4>
                 <h4>계약 보증기간 만료일: <span id="contract-end-date-result"></span> (<span id="contract-end-day-result"></span>)</h4>
                 <h4>보증기간(일수): <span id="contract-days-result"></span></h4>
@@ -77,132 +78,104 @@
                 <label for="acceptance_date">목적물 인수일:</label>
                 <input type="date" id="acceptance_date" required>
 
-                <label for="inspection_date">준공검사 완료일:</label>
-                <input type="date" id="inspection_date" required>
-
-                <label for="defect_responsibility_period">하자담보책임 기간 (개월):</label>
-                <input type="number" id="defect_responsibility_period" min="1" required>
+                <label for="defect_responsibility_period_days">하자담보책임 기간 (일수):</label>
+                <input type="number" id="defect_responsibility_period_days" min="1" required>
 
                 <button type="submit">하자보수보증기간 만료일 계산</button>
             </form>
-            <div id="defect-result" class="guarantee-result" style="display:none;">
+
+            <div id="defect-result" class="guarantee-result">
                 <h4>하자보수보증기간 초일: <span id="defect-start-date-result"></span> (<span id="defect-start-day-result"></span>)</h4>
                 <h4>하자보수보증기간 만료일: <span id="defect-end-date-result"></span> (<span id="defect-end-day-result"></span>)</h4>
                 <h4>보증기간(일수): <span id="defect-days-result"></span></h4>
             </div>
         </div>
+
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 공휴일 정의 함수 (예시로 2024년 주요 공휴일)
-            function getHolidays(year) {
-                return [
-                    new Date(year, 0, 1),  // 설날
-                    new Date(year, 2, 1),  // 삼일절
-                    new Date(year, 4, 5),  // 어린이날
-                    new Date(year, 7, 15),  // 광복절
-                    new Date(year, 9, 3),  // 개천절
-                    new Date(year, 11, 25)  // 크리스마스
-                ];
-            }
+        // 공휴일 리스트 (예시)
+        const holidays = ['2024-01-01', '2024-02-10', '2024-03-01']; // 이 부분은 실제 공휴일 데이터로 업데이트 필요
 
-            // 요일 이름 반환 함수
-            function getDayName(date) {
-                const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-                return days[date.getDay()];
-            }
+        // 주말 및 공휴일 계산 함수
+        function isHolidayOrWeekend(date) {
+            const day = date.getDay();
+            const formattedDate = date.toISOString().split('T')[0];
+            return (day === 0 || day === 6 || holidays.includes(formattedDate));
+        }
 
-            // 공휴일 여부 확인 함수
-            function isHoliday(date, holidays) {
-                return holidays.some(holiday => 
-                    holiday.getFullYear() === date.getFullYear() &&
-                    holiday.getMonth() === date.getMonth() &&
-                    holiday.getDate() === date.getDate());
-            }
+        // 보증기간 계산 (주말/공휴일 제외)
+        function calculateGuaranteePeriod(startDate, duration) {
+            let endDate = new Date(startDate);
+            let remainingDays = duration;
 
-            // 날짜 차이를 일수로 계산하는 함수
-            function calculateDaysBetween(startDate, endDate) {
-                const timeDiff = endDate - startDate;
-                const dayDiff = timeDiff / (1000 * 3600 * 24); // 밀리초를 일수로 변환
-                return Math.round(dayDiff);
-            }
-
-            // 보증금 계산 함수
-            function calculateGuarantee(startDate, periodInDays, holidays) {
-                let endDate = new Date(startDate);
-                endDate.setDate(endDate.getDate() + periodInDays);
-
-                // 만료일이 공휴일 또는 일요일인 경우 익일로 연기
-                while (isHoliday(endDate, holidays) || endDate.getDay() === 0) {
-                    endDate.setDate(endDate.getDate() + 1);
+            while (remainingDays > 0) {
+                endDate.setDate(endDate.getDate() + 1);
+                if (!isHolidayOrWeekend(endDate)) {
+                    remainingDays--;
                 }
-
-                return endDate;
             }
+            return endDate;
+        }
 
-            // 입찰 보증금 계산기
-            document.getElementById('bid-calculator-form').addEventListener('submit', function(event) {
-                event.preventDefault();
+        // 요일 계산
+        function getDayName(date) {
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            return days[date.getDay()];
+        }
 
-                var bidStartDate = new Date(document.getElementById('bid_start_date').value);
-                var bidType = document.getElementById('bid_type').value;
-                var submissionDate = new Date(document.getElementById('submission_date').value);
+        // 입찰 보증금 계산기
+        document.getElementById('bid-calculator-form').addEventListener('submit', function (event) {
+            event.preventDefault();
 
-                var bidPeriod = (bidType === 'construction') ? 90 : 30;
-                var holidays = getHolidays(bidStartDate.getFullYear());
-                var bidEndDate = calculateGuarantee(submissionDate, bidPeriod, holidays);
+            const bidStartDate = new Date(document.getElementById('bid_start_date').value);
+            const bidPeriodDays = parseInt(document.getElementById('bid_period_days').value);
 
-                var bidDays = calculateDaysBetween(bidStartDate, bidEndDate);
+            const bidEndDate = calculateGuaranteePeriod(bidStartDate, bidPeriodDays);
+            const bidDays = bidPeriodDays;
 
-                document.getElementById('bid-start-date-result').textContent = bidStartDate.toISOString().split('T')[0];
-                document.getElementById('bid-start-day-result').textContent = getDayName(bidStartDate);
-                document.getElementById('bid-end-date-result').textContent = bidEndDate.toISOString().split('T')[0];
-                document.getElementById('bid-end-day-result').textContent = getDayName(bidEndDate);
-                document.getElementById('bid-days-result').textContent = bidDays + "일";
-                document.getElementById('bid-result').style.display = 'block';
-            });
+            document.getElementById('bid-start-date-result').textContent = bidStartDate.toISOString().split('T')[0];
+            document.getElementById('bid-start-day-result').textContent = getDayName(bidStartDate);
+            document.getElementById('bid-end-date-result').textContent = bidEndDate.toISOString().split('T')[0];
+            document.getElementById('bid-end-day-result').textContent = getDayName(bidEndDate);
+            document.getElementById('bid-days-result').textContent = bidDays + "일";
+        });
 
-            // 계약 보증금 계산기
-            document.getElementById('contract-calculator-form').addEventListener('submit', function(event) {
-                event.preventDefault();
+        // 계약 보증금 계산기
+        document.getElementById('contract-calculator-form').addEventListener('submit', function (event) {
+            event.preventDefault();
 
-                var contractStartDate = new Date(document.getElementById('contract_start_date').value);
-                var contractPeriod = parseInt(document.getElementById('contract_period').value);
-                var holidays = getHolidays(contractStartDate.getFullYear());
+            const contractStartDate = new Date(document.getElementById('contract_start_date').value);
+            const contractPeriodDays = parseInt(document.getElementById('contract_period_days').value);
 
-                var contractEndDate = calculateGuarantee(contractStartDate, contractPeriod * 30, holidays);
-                var contractDays = calculateDaysBetween(contractStartDate, contractEndDate);
+            const contractEndDate = calculateGuaranteePeriod(contractStartDate, contractPeriodDays);
+            const contractDays = contractPeriodDays;
 
-                document.getElementById('contract-start-date-result').textContent = contractStartDate.toISOString().split('T')[0];
-                document.getElementById('contract-start-day-result').textContent = getDayName(contractStartDate);
-                document.getElementById('contract-end-date-result').textContent = contractEndDate.toISOString().split('T')[0];
-                document.getElementById('contract-end-day-result').textContent = getDayName(contractEndDate);
-                document.getElementById('contract-days-result').textContent = contractDays + "일";
-                document.getElementById('contract-result').style.display = 'block';
-            });
+            document.getElementById('contract-start-date-result').textContent = contractStartDate.toISOString().split('T')[0];
+            document.getElementById('contract-start-day-result').textContent = getDayName(contractStartDate);
+            document.getElementById('contract-end-date-result').textContent = contractEndDate.toISOString().split('T')[0];
+            document.getElementById('contract-end-day-result').textContent = getDayName(contractEndDate);
+            document.getElementById('contract-days-result').textContent = contractDays + "일";
+        });
 
-            // 하자보수보증금 계산기
-            document.getElementById('defect-calculator-form').addEventListener('submit', function(event) {
-                event.preventDefault();
+        // 하자보수보증금 계산기
+        document.getElementById('defect-calculator-form').addEventListener('submit', function (event) {
+            event.preventDefault();
 
-                var acceptanceDate = new Date(document.getElementById('acceptance_date').value);
-                var inspectionDate = new Date(document.getElementById('inspection_date').value);
-                var defectResponsibilityPeriod = parseInt(document.getElementById('defect_responsibility_period').value);
-                var defectStartDate = (acceptanceDate < inspectionDate) ? acceptanceDate : inspectionDate;
-                var holidays = getHolidays(defectStartDate.getFullYear());
+            const acceptanceDate = new Date(document.getElementById('acceptance_date').value);
+            const defectPeriodDays = parseInt(document.getElementById('defect_responsibility_period_days').value);
 
-                var defectEndDate = calculateGuarantee(defectStartDate, defectResponsibilityPeriod * 30, holidays);
-                var defectDays = calculateDaysBetween(defectStartDate, defectEndDate);
+            const defectEndDate = calculateGuaranteePeriod(acceptanceDate, defectPeriodDays);
+            const defectDays = defectPeriodDays;
 
-                document.getElementById('defect-start-date-result').textContent = defectStartDate.toISOString().split('T')[0];
-                document.getElementById('defect-start-day-result').textContent = getDayName(defectStartDate);
-                document.getElementById('defect-end-date-result').textContent = defectEndDate.toISOString().split('T')[0];
-                document.getElementById('defect-end-day-result').textContent = getDayName(defectEndDate);
-                document.getElementById('defect-days-result').textContent = defectDays + "일";
-                document.getElementById('defect-result').style.display = 'block';
-            });
+            document.getElementById('defect-start-date-result').textContent = acceptanceDate.toISOString().split('T')[0];
+            document.getElementById('defect-start-day-result').textContent = getDayName(acceptanceDate);
+            document.getElementById('defect-end-date-result').textContent = defectEndDate.toISOString().split('T')[0];
+            document.getElementById('defect-end-day-result').textContent = getDayName(defectEndDate);
+            document.getElementById('defect-days-result').textContent = defectDays + "일";
         });
     </script>
+
 </body>
+
 </html>
