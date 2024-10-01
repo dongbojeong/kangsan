@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>과징금 산정 프로그램</title>
+    <title>과징금 산정 계산기</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -71,18 +71,21 @@
 
         <label for="months">계약 기간 (개월):</label>
         <input type="number" id="months" name="months" placeholder="계약 기간 입력 (단위: 개월)">
+        
+        <label for="days">잔여일수 (1개월 미만):</label>
+        <input type="number" id="days" name="days" placeholder="잔여 일수 입력 (단위: 일)">
 
         <label for="contributionRate">출자 비율 (%):</label>
         <input type="number" id="contributionRate" name="contributionRate" placeholder="출자 비율 입력 (공동계약의 경우)">
-
+        
         <label for="exchangeRate">환율 (국제입찰 시):</label>
         <input type="number" id="exchangeRate" name="exchangeRate" placeholder="환율 입력 (국제입찰의 경우)">
-
+        
         <label for="fineRate">과징금 부과율 (%):</label>
         <input type="number" id="fineRate" name="fineRate" placeholder="과징금 부과율 입력">
-
+        
         <button onclick="calculatePenalty()">과징금 산정</button>
-
+        
         <p id="result"></p>
     </div>
 
@@ -98,12 +101,13 @@
             var contractAmount = document.getElementById("contractAmount").value.replace(/,/g, '');  // 쉼표 제거 후 금액 가져오기
             var contractType = document.getElementById("contractType").value;
             var months = parseFloat(document.getElementById("months").value);  // 계약 기간
+            var days = parseFloat(document.getElementById("days").value);  // 잔여 일수
             var contributionRate = parseFloat(document.getElementById("contributionRate").value);  // 출자 비율
             var exchangeRate = parseFloat(document.getElementById("exchangeRate").value);  // 환율
             var fineRate = parseFloat(document.getElementById("fineRate").value) / 100;  // 과징금 부과율
             var penalty = 0;
-            var reducedPenalty = 0;  // 감경된 과징금
-
+            var yearlyAmount = 0;
+            
             if (contractAmount === '' || isNaN(contractAmount)) {
                 document.getElementById("result").innerHTML = "계약 금액을 정확히 입력해 주세요.";
                 return;
@@ -134,17 +138,27 @@
                     penalty = contractAmount * fineRate;
                     break;
                 case "제3자를 위한 계약":
+                    // 연평균 계약금액 계산 (잔여일수는 제외)
                     if (isNaN(months) || months < 1) {
                         document.getElementById("result").innerHTML = "계약 기간을 정확히 입력해 주세요.";
                         return;
                     }
-                    var yearlyAmount = (contractAmount / months) * 12;  // 연평균 계약금액 계산
+                    if (!isNaN(days) && days >= 30) {
+                        document.getElementById("result").innerHTML = "잔여 일수는 1개월 미만으로 입력해 주세요.";
+                        return;
+                    }
+                    var totalMonths = months + (days >= 30 ? 1 : 0);  // 잔여일수는 1개월 이상일 경우 추가
+                    if (totalMonths < 12) {
+                        yearlyAmount = contractAmount;  // 1년 미만일 경우 총 계약금액 사용
+                    } else {
+                        yearlyAmount = (contractAmount / totalMonths) * 12;  // 연평균 계약금액 계산
+                    }
                     penalty = yearlyAmount * fineRate;
-                    break;
+                    document.getElementById("result").innerHTML = "제3자를 위한 계약입니다. 연평균 계약금액 계산 시, 잔여일수는 총 개월수에 산입되지 않았습니다.<br>" +
+                        "계약 유형: " + contractType + "<br>" +
+                        "과징금 부과액: " + numberWithCommas(penalty.toFixed(0)) + " 원";
+                    return;
             }
-
-            // 1/2 감경된 과징금 계산
-            reducedPenalty = penalty / 2;
 
             // 금액에 쉼표 추가하는 함수
             function numberWithCommas(x) {
@@ -154,8 +168,7 @@
             // 결과 출력
             document.getElementById("result").innerHTML =
                 "계약 유형: " + contractType + "<br>" +
-                "과징금 부과액: " + numberWithCommas(penalty.toFixed(0)) + " 원<br>" +
-                "1/2 감경된 과징금: " + numberWithCommas(reducedPenalty.toFixed(0)) + " 원";
+                "과징금 부과액: " + numberWithCommas(penalty.toFixed(0)) + " 원";
         }
     </script>
 </body>
