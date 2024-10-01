@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="ko">
 <head>
-    <title> 복수수예가 산출 프로그램</title>
+    <title>복수예가 산출 프로그램</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
@@ -32,11 +32,14 @@
         .btn:hover {
             background-color: #45a049;
         }
+        .radio-btn {
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1> 복수예가 산출 계산기</h1>
+    <h1>투찰 산출 계산기</h1>
     <table>
         <tr>
             <th>기초금액 입력</th>
@@ -44,14 +47,19 @@
         </tr>
         <tr>
             <th>낙찰 하한율 (%)</th>
-            <td><input type="number" id="lowerBound" placeholder="낙찰 하한율 입력 (%)" /></td>
+            <td>
+                <input type="radio" class="radio-btn" name="lowerBound" value="86.745">86.745%
+                <input type="radio" class="radio-btn" name="lowerBound" value="87.745">87.745%
+                <input type="radio" class="radio-btn" name="lowerBound" value="custom">직접 입력
+                <input type="number" id="customLowerBound" placeholder="직접 입력 (%)" style="width: 100px;" />
+            </td>
         </tr>
         <tr>
             <th>예가 범위 선택</th>
             <td>
-                <select id="estimateRange">
-                    <option value="-2,2">-2% ~ 2%</option>
-                    <option value="-3,3">-3% ~ 3%</option>
+                <select id="rangeSelector">
+                    <option value="0.02">±2%</option>
+                    <option value="0.03">±3%</option>
                 </select>
             </td>
         </tr>
@@ -61,37 +69,56 @@
     <ul id="estimateList"></ul>
     <h3>최종 낙찰 가능 금액:</h3>
     <p id="finalPrice"></p>
+    <h3>복수예비가격 선택:</h3>
+    <button class="btn" onclick="manualSelect()">임의 선택</button>
+    <button class="btn" onclick="autoSelect()">자동 선택</button>
 </div>
 
 <script>
 function calculateEstimates() {
     const basePrice = parseFloat(document.getElementById('basePrice').value);
-    const lowerBound = parseFloat(document.getElementById('lowerBound').value);
-    const estimateRange = document.getElementById('estimateRange').value.split(',');
+    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
+    let lowerBound = 0;
 
-    const lowerRange = parseFloat(estimateRange[0]);
-    const upperRange = parseFloat(estimateRange[1]);
+    if (!selectedLowerBound) {
+        alert('낙찰 하한율을 선택하거나 입력해주세요.');
+        return;
+    } else if (selectedLowerBound.value === 'custom') {
+        lowerBound = parseFloat(document.getElementById('customLowerBound').value);
+        if (isNaN(lowerBound)) {
+            alert('낙찰 하한율을 입력해주세요.');
+            return;
+        }
+    } else {
+        lowerBound = parseFloat(selectedLowerBound.value);
+    }
 
-    if (isNaN(basePrice) || isNaN(lowerBound)) {
-        alert('기초금액과 낙찰 하한율을 모두 입력해주세요.');
+    if (isNaN(basePrice)) {
+        alert('기초금액을 입력해주세요.');
         return;
     }
 
-    // 예비가격 생성: 선택된 범위에 따라 예비가격 생성
+    // 예가 범위 선택
+    const selectedRange = parseFloat(document.getElementById('rangeSelector').value);
+
     const estimateList = [];
     for (let i = 0; i < 15; i++) {
-        const variation = Math.random() * (upperRange - lowerRange) + lowerRange;
-        const estimate = basePrice * (1 + variation / 100);
+        const variation = Math.random() * (selectedRange * 2) - selectedRange;  // -selectedRange ~ +selectedRange 범위
+        const estimate = basePrice * (1 + variation);
         estimateList.push(Math.round(estimate));
     }
-
-    // 결과를 화면에 표시
     displayEstimates(estimateList);
 
-    // 자동으로 4개의 예비가격을 선택하여 평균을 낙찰 금액으로 산출
+    // 자동으로 예가 선택 후 낙찰 금액 산출
     const selectedEstimates = selectEstimates(estimateList);
     const finalPrice = calculateFinalPrice(selectedEstimates, lowerBound);
-    document.getElementById('finalPrice').innerText = `${finalPrice.toLocaleString()} 원`;
+
+    if (finalPrice < basePrice * (lowerBound / 100)) {
+        alert('최종 낙찰 금액이 낙찰하한율 이하로 내려갈 수 없습니다.');
+        document.getElementById('finalPrice').innerText = "계산 불가";
+    } else {
+        document.getElementById('finalPrice').innerText = `${finalPrice.toLocaleString()} 원`;
+    }
 }
 
 function displayEstimates(estimateList) {
@@ -105,7 +132,23 @@ function displayEstimates(estimateList) {
 }
 
 function selectEstimates(estimateList) {
-    return estimateList.slice(0, 4);  // 상위 4개의 예비가격 선택 (단순화 처리)
+    return estimateList.slice(0, 4);  // 자동으로 상위 4개의 예비가격 선택
+}
+
+function manualSelect() {
+    const estimateListElem = document.getElementById('estimateList');
+    let selectedEstimates = [];
+    // 임의로 사용자가 예가를 4개 선택하도록 구현
+    selectedEstimates = estimateListElem.children.length >= 4 ? [...estimateListElem.children].slice(0, 4).map(item => parseInt(item.innerText.split(":")[1].replace(/,/g, ''))) : [];
+    alert('4개의 예가를 선택했습니다.');
+}
+
+function autoSelect() {
+    const estimateListElem = document.getElementById('estimateList');
+    let selectedEstimates = [];
+    // 자동으로 상위 4개의 예비가격을 선택
+    selectedEstimates = estimateListElem.children.length >= 4 ? [...estimateListElem.children].slice(0, 4).map(item => parseInt(item.innerText.split(":")[1].replace(/,/g, ''))) : [];
+    alert('자동으로 상위 4개의 예가를 선택했습니다.');
 }
 
 function calculateFinalPrice(estimates, lowerBound) {
