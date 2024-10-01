@@ -43,8 +43,8 @@
                 <button type="submit">입찰 보증기간 만료일 계산</button>
             </form>
             <div id="bid-result" class="guarantee-result">
-                <h4>입찰 보증기간 초일: <span id="bid-start-date-result"></span></h4>
-                <h4>입찰 보증기간 만료일: <span id="bid-end-date-result"></span></h4>
+                <h4>입찰 보증기간 초일: <span id="bid-start-date-result"></span> (<span id="bid-start-day-result"></span>)</h4>
+                <h4>입찰 보증기간 만료일: <span id="bid-end-date-result"></span> (<span id="bid-end-day-result"></span>)</h4>
                 <h4>보증기간(일수): <span id="bid-days-result"></span></h4>
             </div>
         </div>
@@ -60,8 +60,8 @@
                 <button type="submit">계약 보증기간 만료일 계산</button>
             </form>
             <div id="contract-result" class="guarantee-result">
-                <h4>계약 보증기간 초일: <span id="contract-start-date-result"></span></h4>
-                <h4>계약 보증기간 만료일: <span id="contract-end-date-result"></span></h4>
+                <h4>계약 보증기간 초일: <span id="contract-start-date-result"></span> (<span id="contract-start-day-result"></span>)</h4>
+                <h4>계약 보증기간 만료일: <span id="contract-end-date-result"></span> (<span id="contract-end-day-result"></span>)</h4>
                 <h4>보증기간(일수): <span id="contract-days-result"></span></h4>
             </div>
         </div>
@@ -79,8 +79,8 @@
                 <button type="submit">하자보수보증기간 만료일 계산</button>
             </form>
             <div id="defect-result" class="guarantee-result">
-                <h4>하자보수보증기간 초일: <span id="defect-start-date-result"></span></h4>
-                <h4>하자보수보증기간 만료일: <span id="defect-end-date-result"></span></h4>
+                <h4>하자보수보증기간 초일: <span id="defect-start-date-result"></span> (<span id="defect-start-day-result"></span>)</h4>
+                <h4>하자보수보증기간 만료일: <span id="defect-end-date-result"></span> (<span id="defect-end-day-result"></span>)</h4>
                 <h4>보증기간(일수): <span id="defect-days-result"></span></h4>
             </div>
         </div>
@@ -110,6 +110,12 @@
             return Math.round(dayDiff);
         }
 
+        // 날짜의 요일을 반환하는 함수
+        function getDayName(date) {
+            const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+            return days[date.getDay()];
+        }
+
         // 휴일 여부를 확인하는 함수 (토요일, 일요일 또는 특정 년도의 공휴일 처리)
         function isHoliday(date, holidays) {
             const day = date.getDay();
@@ -118,11 +124,11 @@
         }
 
         // 휴일 다음 날로 만료일을 이동하는 함수
-        function adjustForHoliday(date, holidays) {
-            while (isHoliday(date, holidays)) {
-                date.setDate(date.getDate() + 1);
+        function adjustForHoliday(endDate, holidays) {
+            while (isHoliday(endDate, holidays)) {
+                endDate.setDate(endDate.getDate() + 1);
             }
-            return date;
+            return endDate;
         }
 
         // 입찰 보증금 계산기
@@ -137,12 +143,21 @@
 
             var bidPeriod = (bidType === 'construction') ? 90 : 30;
             var bidEndDate = new Date(bidStartDate);
-            bidEndDate.setDate(bidEndDate.getDate() + bidPeriod);
-            bidEndDate = adjustForHoliday(bidEndDate, holidays);
+            var remainingDays = bidPeriod;
+
+            // 휴일을 제외한 보증 기간 계산
+            while (remainingDays > 0) {
+                bidEndDate.setDate(bidEndDate.getDate() + 1);
+                if (!isHoliday(bidEndDate, holidays)) {
+                    remainingDays--;
+                }
+            }
 
             var bidDays = calculateDaysBetween(bidStartDate, bidEndDate);
             document.getElementById('bid-start-date-result').textContent = bidStartDate.toISOString().split('T')[0];
+            document.getElementById('bid-start-day-result').textContent = getDayName(bidStartDate);
             document.getElementById('bid-end-date-result').textContent = bidEndDate.toISOString().split('T')[0];
+            document.getElementById('bid-end-day-result').textContent = getDayName(bidEndDate);
             document.getElementById('bid-days-result').textContent = bidDays + "일";
             document.getElementById('bid-result').style.display = 'block';
         });
@@ -157,12 +172,21 @@
             var holidays = getHolidays(currentYear);
 
             var contractEndDate = new Date(contractStartDate);
-            contractEndDate.setDate(contractEndDate.getDate() + contractPeriodDays);
-            contractEndDate = adjustForHoliday(contractEndDate, holidays);
+            var remainingDays = contractPeriodDays;
+
+            // 휴일을 제외한 보증 기간 계산
+            while (remainingDays > 0) {
+                contractEndDate.setDate(contractEndDate.getDate() + 1);
+                if (!isHoliday(contractEndDate, holidays)) {
+                    remainingDays--;
+                }
+            }
 
             var contractDays = calculateDaysBetween(contractStartDate, contractEndDate);
             document.getElementById('contract-start-date-result').textContent = contractStartDate.toISOString().split('T')[0];
+            document.getElementById('contract-start-day-result').textContent = getDayName(contractStartDate);
             document.getElementById('contract-end-date-result').textContent = contractEndDate.toISOString().split('T')[0];
+            document.getElementById('contract-end-day-result').textContent = getDayName(contractEndDate);
             document.getElementById('contract-days-result').textContent = contractDays + "일";
             document.getElementById('contract-result').style.display = 'block';
         });
@@ -179,12 +203,21 @@
             var holidays = getHolidays(currentYear);
 
             var defectEndDate = new Date(defectStartDate);
-            defectEndDate.setDate(defectEndDate.getDate() + defectResponsibilityPeriod);
-            defectEndDate = adjustForHoliday(defectEndDate, holidays);
+            var remainingDays = defectResponsibilityPeriod;
+
+            // 휴일을 제외한 보증 기간 계산
+            while (remainingDays > 0) {
+                defectEndDate.setDate(defectEndDate.getDate() + 1);
+                if (!isHoliday(defectEndDate, holidays)) {
+                    remainingDays--;
+                }
+            }
 
             var defectDays = calculateDaysBetween(defectStartDate, defectEndDate);
             document.getElementById('defect-start-date-result').textContent = defectStartDate.toISOString().split('T')[0];
+            document.getElementById('defect-start-day-result').textContent = getDayName(defectStartDate);
             document.getElementById('defect-end-date-result').textContent = defectEndDate.toISOString().split('T')[0];
+            document.getElementById('defect-end-day-result').textContent = getDayName(defectEndDate);
             document.getElementById('defect-days-result').textContent = defectDays + "일";
             document.getElementById('defect-result').style.display = 'block';
         });
