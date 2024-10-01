@@ -102,6 +102,7 @@
             var exchangeRate = parseFloat(document.getElementById("exchangeRate").value);  // 환율
             var fineRate = parseFloat(document.getElementById("fineRate").value) / 100;  // 과징금 부과율
             var penalty = 0;
+            var reducedPenalty = 0;  // 감경된 과징금
 
             if (contractAmount === '' || isNaN(contractAmount)) {
                 document.getElementById("result").innerHTML = "계약 금액을 정확히 입력해 주세요.";
@@ -142,6 +143,9 @@
                     break;
             }
 
+            // 1/2 감경된 과징금 계산
+            reducedPenalty = penalty / 2;
+
             // 금액에 쉼표 추가하는 함수
             function numberWithCommas(x) {
                 return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -150,7 +154,8 @@
             // 결과 출력
             document.getElementById("result").innerHTML =
                 "계약 유형: " + contractType + "<br>" +
-                "과징금 부과액: " + numberWithCommas(penalty.toFixed(0)) + " 원";
+                "과징금 부과액: " + numberWithCommas(penalty.toFixed(0)) + " 원<br>" +
+                "1/2 감경된 과징금: " + numberWithCommas(reducedPenalty.toFixed(0)) + " 원";
         }
     </script>
 </body>
