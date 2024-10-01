@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="ko">
 <head>
-    <title>모두입찰 - 복수예가 산출 프로그램</title>
+    <title> - 복수예가 산출 프로그램</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
@@ -37,7 +37,6 @@
 <body>
 <div class="container">
     <h1>모두입찰 - 복수예가 산출 프로그램</h1>
-
     <table>
         <tr>
             <th>기초금액 입력</th>
@@ -47,13 +46,19 @@
             <th>낙찰 하한율 (%)</th>
             <td><input type="number" id="lowerBound" placeholder="낙찰 하한율 입력 (%)" /></td>
         </tr>
+        <tr>
+            <th>예가 범위 선택</th>
+            <td>
+                <select id="estimateRange">
+                    <option value="-2,2">-2% ~ 2%</option>
+                    <option value="-3,3">-3% ~ 3%</option>
+                </select>
+            </td>
+        </tr>
     </table>
-
     <button class="btn" onclick="calculateEstimates()">예가 산출</button>
-
     <h3>산출된 복수예비가격:</h3>
     <ul id="estimateList"></ul>
-
     <h3>최종 낙찰 가능 금액:</h3>
     <p id="finalPrice"></p>
 </div>
@@ -62,17 +67,21 @@
 function calculateEstimates() {
     const basePrice = parseFloat(document.getElementById('basePrice').value);
     const lowerBound = parseFloat(document.getElementById('lowerBound').value);
+    const estimateRange = document.getElementById('estimateRange').value.split(',');
+
+    const lowerRange = parseFloat(estimateRange[0]);
+    const upperRange = parseFloat(estimateRange[1]);
 
     if (isNaN(basePrice) || isNaN(lowerBound)) {
         alert('기초금액과 낙찰 하한율을 모두 입력해주세요.');
         return;
     }
 
-    // 복수예비가격 생성: 15개의 난수를 사용해 ±2% 내에서 예비가격을 생성
+    // 예비가격 생성: 선택된 범위에 따라 예비가격 생성
     const estimateList = [];
     for (let i = 0; i < 15; i++) {
-        const variation = Math.random() * 0.04 - 0.02;  // -2% ~ 2% 범위
-        const estimate = basePrice * (1 + variation);
+        const variation = Math.random() * (upperRange - lowerRange) + lowerRange;
+        const estimate = basePrice * (1 + variation / 100);
         estimateList.push(Math.round(estimate));
     }
 
