@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="ko">
 <head>
-    <title>복수예가 산출 프로그램</title>
+    <title>입찰 복수예가 산출 프로그램</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
@@ -130,8 +130,7 @@ function displayEstimates(estimateList, basePrice) {
     const estimateTableBody = document.querySelector('#estimateTable tbody');
     estimateTableBody.innerHTML = '';
     estimateList.forEach((estimate, index) => {
-        const row = document.createElement('tr');
-        const rate = ((estimate / basePrice) * 100).toFixed(2);  // 기초금액 대비 비율 계산
+        const rate = ((estimate / basePrice) * 100).toFixed(3);  // 기초금액 대비 비율 소수점 3자리까지 계산
 
         row.innerHTML = `
             <td><input type="checkbox" class="estimate-checkbox" value="${estimate}"></td>
@@ -174,10 +173,10 @@ function calculateFinalPrice(estimates, lowerBound) {
     const finalPrice = Math.round(averageEstimate * (lowerBound / 100));
 
     const basePrice = parseFloat(document.getElementById('basePrice').value.replace(/,/g, ''));
-    const finalRate = ((finalPrice / basePrice) * 100).toFixed(2);  // 기초금액 대비 비율 계산
+    const finalRate = ((finalPrice / basePrice) * 100).toFixed(3);  // 기초금액 대비 비율 소수점 3자리까지 계산
 
-    // 낙찰 하한율 이하로 계산된 금액이 나오는 것을 방지
-    if (finalPrice < averageEstimate * (lowerBound / 100)) {
+    // 낙찰 하한율 이하로 계산된 금액이 나오는 것을 방지 (소수점 3자리까지 비교)
+    if (parseFloat(finalRate) < lowerBound.toFixed(3)) {
         alert('최종 낙찰 금액이 낙찰하한율 이하로 내려갈 수 없습니다.');
         document.getElementById('finalPrice').innerText = "계산 불가";
     } else {
