@@ -120,12 +120,12 @@
         function isHoliday(date, holidays) {
             const day = date.getDay();
             const formattedDate = date.toISOString().split('T')[0];
-            return day === 6 || day === 0 || holidays.includes(formattedDate); // 6 = 토요일, 0 = 일요일
+            return holidays.includes(formattedDate); // 공휴일만 제외
         }
 
-        // 휴일 다음 날로 만료일을 이동하는 함수
+        // 휴일 다음 날로 만료일을 이동하는 함수 (공휴일만 해당)
         function adjustForHoliday(endDate, holidays) {
-            while (isHoliday(endDate, holidays)) {
+            if (isHoliday(endDate, holidays)) {
                 endDate.setDate(endDate.getDate() + 1);
             }
             return endDate;
@@ -143,15 +143,10 @@
 
             var bidPeriod = (bidType === 'construction') ? 90 : 30;
             var bidEndDate = new Date(bidStartDate);
-            var remainingDays = bidPeriod;
+            bidEndDate.setDate(bidEndDate.getDate() + bidPeriod);
 
-            // 휴일을 제외한 보증 기간 계산
-            while (remainingDays > 0) {
-                bidEndDate.setDate(bidEndDate.getDate() + 1);
-                if (!isHoliday(bidEndDate, holidays)) {
-                    remainingDays--;
-                }
-            }
+            // 만료일이 공휴일이면 다음 영업일로 이동
+            bidEndDate = adjustForHoliday(bidEndDate, holidays);
 
             var bidDays = calculateDaysBetween(bidStartDate, bidEndDate);
             document.getElementById('bid-start-date-result').textContent = bidStartDate.toISOString().split('T')[0];
@@ -172,15 +167,10 @@
             var holidays = getHolidays(currentYear);
 
             var contractEndDate = new Date(contractStartDate);
-            var remainingDays = contractPeriodDays;
+            contractEndDate.setDate(contractEndDate.getDate() + contractPeriodDays);
 
-            // 휴일을 제외한 보증 기간 계산
-            while (remainingDays > 0) {
-                contractEndDate.setDate(contractEndDate.getDate() + 1);
-                if (!isHoliday(contractEndDate, holidays)) {
-                    remainingDays--;
-                }
-            }
+            // 만료일이 공휴일이면 다음 영업일로 이동
+            contractEndDate = adjustForHoliday(contractEndDate, holidays);
 
             var contractDays = calculateDaysBetween(contractStartDate, contractEndDate);
             document.getElementById('contract-start-date-result').textContent = contractStartDate.toISOString().split('T')[0];
@@ -203,15 +193,10 @@
             var holidays = getHolidays(currentYear);
 
             var defectEndDate = new Date(defectStartDate);
-            var remainingDays = defectResponsibilityPeriod;
+            defectEndDate.setDate(defectEndDate.getDate() + defectResponsibilityPeriod);
 
-            // 휴일을 제외한 보증 기간 계산
-            while (remainingDays > 0) {
-                defectEndDate.setDate(defectEndDate.getDate() + 1);
-                if (!isHoliday(defectEndDate, holidays)) {
-                    remainingDays--;
-                }
-            }
+            // 만료일이 공휴일이면 다음 영업일로 이동
+            defectEndDate = adjustForHoliday(defectEndDate, holidays);
 
             var defectDays = calculateDaysBetween(defectStartDate, defectEndDate);
             document.getElementById('defect-start-date-result').textContent = defectStartDate.toISOString().split('T')[0];
