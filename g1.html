@@ -115,41 +115,45 @@
 
             let contractStartDate, contractEndDate, contractPeriodDays, originalEndDate;
 
-            if (contractType === 'after_days') {
-                // 계약 후 일수로 설정할 경우
-                contractStartDate = new Date(document.getElementById('contract_start_date').value);
-                contractPeriodDays = parseInt(document.getElementById('contract_period_days').value);
-                contractEndDate = new Date(contractStartDate);
-                contractEndDate.setDate(contractEndDate.getDate() + contractPeriodDays);
-            } else {
-                // 납품기한 직접 지정할 경우
-                contractStartDate = new Date(document.getElementById('delivery_start_date').value);
-                const deliveryDate = new Date(document.getElementById('delivery_date').value);
-                contractEndDate = new Date(deliveryDate); // 납품기한을 만료일로 설정
-                contractPeriodDays = Math.round((contractEndDate - contractStartDate) / (1000 * 60 * 60 * 24)); // 일수 계산
+            try {
+                if (contractType === 'after_days') {
+                    // 계약 후 일수로 설정할 경우
+                    contractStartDate = new Date(document.getElementById('contract_start_date').value);
+                    contractPeriodDays = parseInt(document.getElementById('contract_period_days').value);
+                    contractEndDate = new Date(contractStartDate);
+                    contractEndDate.setDate(contractEndDate.getDate() + contractPeriodDays);
+                } else {
+                    // 납품기한 직접 지정할 경우
+                    contractStartDate = new Date(document.getElementById('delivery_start_date').value);
+                    const deliveryDate = new Date(document.getElementById('delivery_date').value);
+                    contractEndDate = new Date(deliveryDate); // 납품기한을 만료일로 설정
+                    contractPeriodDays = Math.round((contractEndDate - contractStartDate) / (1000 * 60 * 60 * 24)); // 일수 계산
+                }
+
+                // 만료일이 휴일이면 다음날로 조정
+                originalEndDate = new Date(contractEndDate);
+                contractEndDate = adjustForHoliday(contractEndDate, holidays);
+
+                // 결과 표시
+                const startDayName = contractStartDate.toLocaleDateString('ko-KR', { weekday: 'long' });
+                const endDayName = contractEndDate.toLocaleDateString('ko-KR', { weekday: 'long' });
+                document.getElementById('contract-start-date-result').textContent = contractStartDate.toISOString().split('T')[0];
+                document.getElementById('contract-start-day-result').textContent = startDayName;
+                document.getElementById('contract-end-date-result').textContent = contractEndDate.toISOString().split('T')[0];
+                document.getElementById('contract-end-day-result').textContent = endDayName;
+                document.getElementById('contract-days-result').textContent = contractPeriodDays;
+
+                // 공휴일로 인해 변경된 경우 설명 추가
+                if (originalEndDate.getTime() !== contractEndDate.getTime()) {
+                    document.getElementById('holiday-note').textContent = `만료일이 공휴일이므로 다음날(${endDayName})로 조정되었습니다.`;
+                } else {
+                    document.getElementById('holiday-note').textContent = '';
+                }
+
+                document.getElementById('contract-result').style.display = 'block';
+            } catch (error) {
+                console.error("계산 중 오류가 발생했습니다: ", error);
             }
-
-            // 만료일이 휴일이면 다음날로 조정
-            originalEndDate = new Date(contractEndDate);
-            contractEndDate = adjustForHoliday(contractEndDate, holidays);
-
-            // 결과 표시
-            const startDayName = contractStartDate.toLocaleDateString('ko-KR', { weekday: 'long' });
-            const endDayName = contractEndDate.toLocaleDateString('ko-KR', { weekday: 'long' });
-            document.getElementById('contract-start-date-result').textContent = contractStartDate.toISOString().split('T')[0];
-            document.getElementById('contract-start-day-result').textContent = startDayName;
-            document.getElementById('contract-end-date-result').textContent = contractEndDate.toISOString().split('T')[0];
-            document.getElementById('contract-end-day-result').textContent = endDayName;
-            document.getElementById('contract-days-result').textContent = contractPeriodDays;
-
-            // 공휴일로 인해 변경된 경우 설명 추가
-            if (originalEndDate.getTime() !== contractEndDate.getTime()) {
-                document.getElementById('holiday-note').textContent = `만료일이 공휴일이므로 다음날(${endDayName})로 조정되었습니다.`;
-            } else {
-                document.getElementById('holiday-note').textContent = '';
-            }
-
-            document.getElementById('contract-result').style.display = 'block';
         });
     });
     </script>
