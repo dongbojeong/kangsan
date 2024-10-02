@@ -1,103 +1,123 @@
-<!-- 계약 보증금 계산 -->
-<div class="guarantee-section">
-    <h3>계약 보증기간 계산</h3>
-    <form id="contract-calculator-form">
-        <label for="contract_option">계약 보증금 설정 옵션:</label>
-        <select id="contract_option" required>
-            <option value="days_after_contract">계약 후 일수로 설정</option>
-            <option value="delivery_due_date">납품 기한으로 설정</option>
-        </select>
-
-        <div id="contract-days-option">
-            <label for="contract_period_days">계약 보증금 기간 (일):</label>
-            <input type="number" id="contract_period_days" min="1">
-        </div>
-
-        <div id="contract-due-date-option" style="display: none;">
-            <label for="delivery_due_date">납품 기한:</label>
-            <input type="date" id="delivery_due_date">
-        </div>
-
-        <label for="contract_start_date">계약 기간 개시일:</label>
-        <input type="date" id="contract_start_date" required>
-
-        <button type="submit">계약 보증기간 만료일 계산</button>
-    </form>
-    
-    <div id="contract-result" class="guarantee-result">
-        <h4>계약 보증기간 초일: <span id="contract-start-date-result"></span> (<span id="contract-start-day-result"></span>)</h4>
-        <h4>계약 보증기간 만료일: <span id="contract-end-date-result"></span> (<span id="contract-end-day-result"></span>)</h4>
-        <h4>보증기간(일수): <span id="contract-days-result"></span></h4>
-        <p id="holiday-comment" style="color: red; display: none;">
-            * 계약 보증기간 만료일이 공휴일인 경우, 만료일은 다음 영업일로 설정되었습니다.
-        </p>
-    </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 특정 년도의 공휴일을 계산하는 함수 (예: 2024년)
-    function getHolidays(year) {
-        return [
-            `${year}-01-01`, // 신정
-            `${year}-02-09`, `${year}-02-10`, `${year}-02-11`, // 설날 연휴
-            `${year}-03-01`, // 삼일절
-            `${year}-05-05`, // 어린이날
-            `${year}-06-06`, // 현충일
-            `${year}-08-15`, // 광복절
-            `${year}-09-15`, `${year}-09-16`, `${year}-09-17`, // 추석 연휴
-            `${year}-10-03`, // 개천절
-            `${year}-12-25`  // 성탄절
-        ];
-    }
-
-    // 날짜 차이를 일수로 계산하는 함수
-    function calculateDaysBetween(startDate, endDate) {
-        const timeDiff = endDate - startDate;
-        const dayDiff = timeDiff / (1000 * 3600 * 24); // 밀리초를 일수로 변환
-        return Math.round(dayDiff);
-    }
-
-    // 휴일 여부를 확인하는 함수 (토요일, 일요일 또는 특정 년도의 공휴일 처리)
-    function isHoliday(date, holidays) {
-        const day = date.getDay();
-        const formattedDate = date.toISOString().split('T')[0];
-        return day === 6 || day === 0 || holidays.includes(formattedDate); // 6 = 토요일, 0 = 일요일
-    }
-
-    // 휴일 다음 날로 만료일을 이동하는 함수
-    function adjustForHoliday(endDate, holidays) {
-        while (isHoliday(endDate, holidays)) {
-            endDate.setDate(endDate.getDate() + 1);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guarantee Calculator</title>
+    <style>
+        .guarantee-section {
+            border: 2px solid #ccc;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
         }
-        return endDate;
-    }
+        .guarantee-section h3 {
+            background-color: #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .guarantee-result {
+            margin-top: 20px;
+            display: none; /* 결과는 처음에 숨김 */
+        }
+    </style>
+</head>
+<body>
+    <div id="guarantee-calculator">
+        <h2>보증기간 계산기</h2>
 
-    // 계약 보증금 계산기
-    document.getElementById('contract-calculator-form').addEventListener('submit', function(event) {
-        event.preventDefault();
+        <!-- 계약 보증금 계산 -->
+        <div class="guarantee-section">
+            <h3>계약 보증기간 계산</h3>
+            <form id="contract-calculator-form">
+                <label for="contract_start_date">계약 기간 개시일:</label>
+                <input type="date" id="contract_start_date" required>
 
-        var contractStartDate = new Date(document.getElementById('contract_start_date').value);
-        var contractPeriodDays = parseInt(document.getElementById('contract_period_days').value);
-        var contractEndDate = new Date(contractStartDate);
-        var currentYear = contractStartDate.getFullYear();
-        var holidays = getHolidays(currentYear);
+                <label for="contract_period_days">계약 보증금 기간 (일):</label>
+                <input type="number" id="contract_period_days" min="1" required>
 
-        // 계약 보증금 만료일을 계산 (휴일은 포함하여 일수 계산)
-        contractEndDate.setDate(contractEndDate.getDate() + contractPeriodDays);
+                <label for="delivery_date">납품 기한:</label>
+                <input type="date" id="delivery_date" required>
 
-        // 만료일이 공휴일인 경우 다음 영업일로 이동
-        var adjustedEndDate = adjustForHoliday(contractEndDate, holidays);
+                <button type="submit">계약 보증기간 만료일 계산</button>
+            </form>
 
-        // 보증기간 출력
-        var contractDays = calculateDaysBetween(contractStartDate, adjustedEndDate);
-        document.getElementById('contract-start-date-result').textContent = contractStartDate.toISOString().split('T')[0];
-        document.getElementById('contract-start-day-result').textContent = contractStartDate.toLocaleDateString('ko-KR', { weekday: 'long' });
-        document.getElementById('contract-end-date-result').textContent = adjustedEndDate.toISOString().split('T')[0];
-        document.getElementById('contract-end-day-result').textContent = adjustedEndDate.toLocaleDateString('ko-KR', { weekday: 'long' });
-        document.getElementById('contract-days-result').textContent = contractDays + "일";
-        document.getElementById('contract-result').style.display = 'block';
+            <div id="contract-result" class="guarantee-result">
+                <h4>계약 보증기간 초일: <span id="contract-start-date-result"></span> (<span id="contract-start-day-result"></span>)</h4>
+                <h4>계약 보증기간 만료일: <span id="contract-end-date-result"></span> (<span id="contract-end-day-result"></span>)</h4>
+                <h4>보증기간(일수): <span id="contract-days-result"></span></h4>
+                <p id="holiday-note"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 공휴일 계산 함수
+        function getHolidays(year) {
+            return [
+                `${year}-01-01`, // 신정
+                `${year}-03-01`, // 삼일절
+                `${year}-05-05`, // 어린이날
+                `${year}-08-15`, // 광복절
+                `${year}-10-03`, // 개천절
+                `${year}-12-25`  // 성탄절
+            ];
+        }
+
+        // 휴일 여부 확인 함수
+        function isHoliday(date, holidays) {
+            const formattedDate = date.toISOString().split('T')[0];
+            const day = date.getDay();
+            return day === 0 || day === 6 || holidays.includes(formattedDate);
+        }
+
+        // 보증기간 만료일을 휴일이면 다음날로 설정
+        function adjustForHoliday(endDate, holidays) {
+            while (isHoliday(endDate, holidays)) {
+                endDate.setDate(endDate.getDate() + 1);
+            }
+            return endDate;
+        }
+
+        // 계약 보증금 계산기
+        document.getElementById('contract-calculator-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const contractStartDate = new Date(document.getElementById('contract_start_date').value);
+            const contractPeriodDays = parseInt(document.getElementById('contract_period_days').value);
+            const deliveryDate = new Date(document.getElementById('delivery_date').value);
+
+            const currentYear = contractStartDate.getFullYear();
+            const holidays = getHolidays(currentYear);
+
+            let contractEndDate = new Date(deliveryDate);
+            contractEndDate.setDate(contractEndDate.getDate() + contractPeriodDays);
+
+            // 만료일이 휴일이면 다음날로 조정
+            const originalEndDate = new Date(contractEndDate);
+            contractEndDate = adjustForHoliday(contractEndDate, holidays);
+
+            // 결과 표시
+            const startDayName = contractStartDate.toLocaleDateString('ko-KR', { weekday: 'long' });
+            const endDayName = contractEndDate.toLocaleDateString('ko-KR', { weekday: 'long' });
+            document.getElementById('contract-start-date-result').textContent = contractStartDate.toISOString().split('T')[0];
+            document.getElementById('contract-start-day-result').textContent = startDayName;
+            document.getElementById('contract-end-date-result').textContent = contractEndDate.toISOString().split('T')[0];
+            document.getElementById('contract-end-day-result').textContent = endDayName;
+            document.getElementById('contract-days-result').textContent = contractPeriodDays;
+
+            // 공휴일로 인해 변경된 경우 설명 추가
+            if (originalEndDate.getTime() !== contractEndDate.getTime()) {
+                document.getElementById('holiday-note').textContent = `만료일이 공휴일이므로 다음날(${endDayName})로 조정되었습니다.`;
+            } else {
+                document.getElementById('holiday-note').textContent = '';
+            }
+
+            document.getElementById('contract-result').style.display = 'block';
+        });
     });
-});
-
-</script>
+    </script>
+</body>
+</html>
