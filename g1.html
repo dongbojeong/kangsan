@@ -19,7 +19,7 @@
         }
         .guarantee-result {
             margin-top: 20px;
-            display: none; /* 결과는 처음에 숨김 */
+            display: none;
         }
     </style>
 </head>
@@ -46,8 +46,11 @@
                 </div>
 
                 <div id="delivery-date-option" style="display: none;">
+                    <label for="delivery_start_date">납품기한 초일:</label>
+                    <input type="date" id="delivery_start_date" required>
+
                     <label for="delivery_date">납품기한:</label>
-                    <input type="date" id="delivery_date">
+                    <input type="date" id="delivery_date" required>
                 </div>
 
                 <button type="submit">계약 보증기간 만료일 계산</button>
@@ -120,9 +123,10 @@
                 contractEndDate.setDate(contractEndDate.getDate() + contractPeriodDays);
             } else {
                 // 납품기한 직접 지정할 경우
-                contractStartDate = new Date(document.getElementById('delivery_date').value);
-                contractEndDate = new Date(contractStartDate); // 납품기한을 만료일로 설정
-                contractPeriodDays = 0; // 보증기간 일수는 계산하지 않음
+                contractStartDate = new Date(document.getElementById('delivery_start_date').value);
+                const deliveryDate = new Date(document.getElementById('delivery_date').value);
+                contractEndDate = new Date(deliveryDate); // 납품기한을 만료일로 설정
+                contractPeriodDays = Math.round((contractEndDate - contractStartDate) / (1000 * 60 * 60 * 24)); // 일수 계산
             }
 
             // 만료일이 휴일이면 다음날로 조정
