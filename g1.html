@@ -78,37 +78,18 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
 
         var contractStartDate = new Date(document.getElementById('contract_start_date').value);
-        var contractOption = document.getElementById('contract_option').value;
+        var contractPeriodDays = parseInt(document.getElementById('contract_period_days').value);
+        var contractEndDate = new Date(contractStartDate);
         var currentYear = contractStartDate.getFullYear();
         var holidays = getHolidays(currentYear);
-        var contractEndDate;
-        var remainingDays;
 
-        if (contractOption === 'days_after_contract') {
-            remainingDays = parseInt(document.getElementById('contract_period_days').value);
-            contractEndDate = new Date(contractStartDate);
-
-            // 휴일을 제외한 보증 기간 계산
-            while (remainingDays > 0) {
-                contractEndDate.setDate(contractEndDate.getDate() + 1);
-                if (!isHoliday(contractEndDate, holidays)) {
-                    remainingDays--;
-                }
-            }
-        } else if (contractOption === 'delivery_due_date') {
-            contractEndDate = new Date(document.getElementById('delivery_due_date').value);
-        }
+        // 계약 보증금 만료일을 계산 (휴일은 포함하여 일수 계산)
+        contractEndDate.setDate(contractEndDate.getDate() + contractPeriodDays);
 
         // 만료일이 공휴일인 경우 다음 영업일로 이동
-        var adjustedEndDate = adjustForHoliday(new Date(contractEndDate), holidays);
+        var adjustedEndDate = adjustForHoliday(contractEndDate, holidays);
 
-        // 공휴일로 인한 만료일 조정 여부를 확인하여 코멘트 표시
-        if (adjustedEndDate > contractEndDate) {
-            document.getElementById('holiday-comment').style.display = 'block';
-        } else {
-            document.getElementById('holiday-comment').style.display = 'none';
-        }
-
+        // 보증기간 출력
         var contractDays = calculateDaysBetween(contractStartDate, adjustedEndDate);
         document.getElementById('contract-start-date-result').textContent = contractStartDate.toISOString().split('T')[0];
         document.getElementById('contract-start-day-result').textContent = contractStartDate.toLocaleDateString('ko-KR', { weekday: 'long' });
@@ -117,17 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('contract-days-result').textContent = contractDays + "일";
         document.getElementById('contract-result').style.display = 'block';
     });
-
-    // 계약 옵션에 따라 입력 필드 보이기/숨기기
-    document.getElementById('contract_option').addEventListener('change', function() {
-        var selectedOption = this.value;
-        if (selectedOption === 'days_after_contract') {
-            document.getElementById('contract-days-option').style.display = 'block';
-            document.getElementById('contract-due-date-option').style.display = 'none';
-        } else if (selectedOption === 'delivery_due_date') {
-            document.getElementById('contract-days-option').style.display = 'none';
-            document.getElementById('contract-due-date-option').style.display = 'block';
-        }
-    });
 });
+
 </script>
