@@ -156,6 +156,37 @@
             }
         });
     });
+        document.getElementById('contract_type').addEventListener('change', function(event) {
+    const contractDaysOption = document.getElementById('contract-days-option');
+    const deliveryDateOption = document.getElementById('delivery-date-option');
+    
+    if (event.target.value === 'after_days') {
+        // Show the fields for "after_days"
+        contractDaysOption.style.display = 'block';
+        deliveryDateOption.style.display = 'none';
+        
+        // Enable the input fields for "after_days"
+        document.getElementById('contract_start_date').disabled = false;
+        document.getElementById('contract_period_days').disabled = false;
+
+        // Disable the input fields for "direct_delivery"
+        document.getElementById('delivery_start_date').disabled = true;
+        document.getElementById('delivery_date').disabled = true;
+    } else {
+        // Show the fields for "direct_delivery"
+        contractDaysOption.style.display = 'none';
+        deliveryDateOption.style.display = 'block';
+
+        // Enable the input fields for "direct_delivery"
+        document.getElementById('delivery_start_date').disabled = false;
+        document.getElementById('delivery_date').disabled = false;
+
+        // Disable the input fields for "after_days"
+        document.getElementById('contract_start_date').disabled = true;
+        document.getElementById('contract_period_days').disabled = true;
+    }
+});
+
     </script>
 </body>
 </html>
