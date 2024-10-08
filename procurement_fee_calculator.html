@@ -57,7 +57,7 @@
         <h1>조달수수료 계산기</h1>
         <h3>계약금액 및 계약 구분에 따른 수수료 계산</h3>
 
-        <label for="amount">적용 기준 금액 (원):</label>
+        <label for="amount">적용 기준 금액(원) 부가세포함:</label>
         <input type="text" id="amount" name="amount" placeholder="금액 입력" oninput="formatNumber(this)">
         
         <label for="contractType">계약 구분:</label>
@@ -139,7 +139,7 @@
 
             // 결과 출력
             document.getElementById("result").innerHTML =
-                "계약금액 " + numberWithCommas(amount.toFixed(0)) + "원 기준:<br>" +
+                "계약금액(부가세포함) " + numberWithCommas(amount.toFixed(0)) + "원 기준:<br>" +
                 "수수료(리스 미포함): " + numberWithCommas(fee.toFixed(0)) + " 원<br>" +
                 "리스 수수료: " + numberWithCommas(leaseFee.toFixed(0)) + " 원<br>" +
                 "수수료 합계(리스 포함): " + numberWithCommas(totalFee.toFixed(0)) + " 원<br><br>" +
