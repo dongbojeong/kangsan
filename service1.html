@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>용역조달 수수료 계산기</title>
+    <style>
+        #rateTypeContainer {
+            display: inline-block;
+            margin-left: 10px; /* 용역유형 옆 간격 조정 */
+        }
+        #rateTypeContainer button {
+            display: inline-block;
+            margin-right: 5px; /* 버튼 사이 간격 */
+        }
+    </style>
+</head>
+<body>
+    <h1>용역조달 수수료 계산기</h1>
+
+    <label for="contractAmount">계약금액(천단위 구분): </label>
+    <input type="text" id="contractAmount" oninput="formatAmount(this)" placeholder="1,000,000">
+
+    <label for="category">용역 유형: </label>
+    <select id="category" onchange="handleCategoryChange()">
+        <option value="설계등용역">설계 등 용역</option>
+        <option value="감리CM용역">감리 CM 용역</option>
+        <option value="설계공모">설계 공모</option>
+    </select>
+
+    <div id="rateTypeContainer">
+        <button onclick="calculateFee('제안')">제안</button>
+        <button onclick="calculateFee('PQ')">PQ</button>
+        <button onclick="calculateFee('비PQ')">비PQ</button>
+    </div>
+
+    <h3>산출내역</h3>
+    <div id="result"></div>
+
+    <p>※ 이 프로그램은 계약조건에 따라 수수료가 변경될 수도 있습니다!</p>
+
+    <script>
+        // 천 단위 콤마 표시 함수
+        function formatAmount(input) {
+            let value = input.value.replace(/,/g, '');  // 기존 콤마 제거
+            if (!isNaN(value) && value !== '') {
+                value = parseInt(value, 10).toLocaleString();  // 천 단위 콤마 추가
+                input.value = value;
+            }
+        }
+
+        function handleCategoryChange() {
+            const category = document.getElementById('category').value;
+            const rateTypeContainer = document.getElementById('rateTypeContainer');
+
+            if (category === '설계공모') {
+                rateTypeContainer.innerHTML = `
+                    <button onclick="calculateFee('심사포함')">심사 포함</button>
+                    <button onclick="calculateFee('심사제외')">심사 제외</button>
+                `;
+            } else {
+                rateTypeContainer.innerHTML = `
+                    <button onclick="calculateFee('제안')">제안</button>
+                    <button onclick="calculateFee('PQ')">PQ</button>
+                    <button onclick="calculateFee('비PQ')">비PQ</button>
+                `;
+            }
+        }
+
+        const rates = {
+            "설계등용역": {
+                "제안": [0.013, 0.011, 0.009, 0.007],
+                "PQ": [0.01, 0.008, 0.006, 0.004],
+                "비PQ": [0.008, 0.006, 0.004, 0.002]
+            },
+            "감리CM용역": {
+                "제안": [0.012, 0.01, 0.008, 0.006],
+                "PQ": [0.009, 0.007, 0.005, 0.003],
+                "비PQ": [0.008, 0.006, 0.004, 0.002]
+            },
+            "설계공모": {
+                "심사포함": [0.019, 0.016, 0.013, 0.01],
+                "심사제외": [0.008, 0.006, 0.004, 0.002]
+            }
+        };
+
+        function calculateFee(type) {
+            const amountString = document.getElementById('contractAmount').value.replace(/,/g, '');
+            let contractAmount = parseFloat(amountString);
+            const category = document.getElementById('category').value;
+
+            let fee = 0;
+            let breakdown = '';
+
+            const rate = rates[category][type];
+
+            // 구간별 계산 로직
+            if (contractAmount > 3000000000) {
+                let portion = contractAmount - 3000000000;
+                fee += portion * rate[3];
+                breakdown += `(${portion.toLocaleString()}) * ${rate[3]} = ${(portion * rate[3]).toLocaleString()}<br>`;
+                contractAmount = 3000000000;
+            }
+
+            if (contractAmount > 1000000000) {
+                let portion = contractAmount - 1000000000;
+                fee += portion * rate[2];
+                breakdown += `(${portion.toLocaleString()}) * ${rate[2]} = ${(portion * rate[2]).toLocaleString()}<br>`;
+                contractAmount = 1000000000;
+            }
+
+            if (contractAmount > 100000000) {
+                let portion = contractAmount - 100000000;
+                fee += portion * rate[1];
+                breakdown += `(${portion.toLocaleString()}) * ${rate[1]} = ${(portion * rate[1]).toLocaleString()}<br>`;
+                contractAmount = 100000000;
+            }
+
+            if (contractAmount > 0) {
+                fee += contractAmount * rate[0];
+                breakdown += `(${contractAmount.toLocaleString()}) * ${rate[0]} = ${(contractAmount * rate[0]).toLocaleString()}<br>`;
+            }
+
+            fee = Math.floor(fee / 10) * 10;  // 원 단위 절삭
+
+            document.getElementById('result').innerHTML = `
+                ▶ 계약금액 ${parseFloat(amountString).toLocaleString()}원을 기준할시 아래 계산에 따라<br>
+                ${breakdown}
+                <strong>계: ${fee.toLocaleString()} 원</strong><br>
+                ▶ 수수료 = ${fee.toLocaleString()} 원
+            `;
+        }
+    </script>
+</body>
+</html>
