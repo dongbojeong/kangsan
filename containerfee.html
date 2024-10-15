@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공사원가사전검토 조달수수료</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        .calculator-container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        .calculator-container input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-align: right;
+        }
+        .calculator-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        .calculator-container button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function calculateFee() {
+            let amountInput = document.getElementById("amount").value;
+            let amount = parseFloat(amountInput.replace(/,/g, ''));
+            if (isNaN(amount) || amount <= 0) {
+                alert("유효한 금액을 입력해주세요.");
+                return;
+            }
+
+            let feeRate;
+            let type = document.querySelector('input[name="entityType"]:checked').value;
+
+            if (amount <= 10000000000) { // 100억 원까지
+                feeRate = 0.0004;
+            } else { // 100억 원 초과
+                feeRate = type === "local" ? 0.0002 : 0.0004;
+            }
+
+            let fee = Math.floor(amount * feeRate / 10) * 10; // 원단위 절삭
+            document.getElementById("result").innerText = "검토대가: " + formatNumber(fee) + " 원";
+        }
+
+        function formatInput() {
+            let amountInput = document.getElementById("amount");
+            let value = amountInput.value.replace(/,/g, '');
+            if (!isNaN(value) && value !== "") {
+                amountInput.value = formatNumber(value);
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="calculator-container">
+        <h2>공사원가 사전검토 수수료</h2>
+        <input type="text" id="amount" placeholder="검토 요청 금액 입력" onkeyup="formatInput()">
+        <div>
+            <input type="radio" id="national" name="entityType" value="national" checked>
+            <label for="national">국가, 기타기관</label><br>
+            <input type="radio" id="local" name="entityType" value="local">
+            <label for="local">지방자치단체</label>
+        </div>
+        <button onclick="calculateFee()">계산</button>
+        <div id="result" class="result"></div>
+    </div>
+</body>
+</html>
