@@ -5,6 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>용역조달 수수료 계산기</title>
     <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        #calculatorContainer {
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
         #rateTypeContainer {
             display: inline-block;
             margin-left: 10px; /* 용역유형 옆 간격 조정 */
@@ -13,32 +32,31 @@
             display: inline-block;
             margin-right: 5px; /* 버튼 사이 간격 */
         }
+        input, select {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>용역조달 수수료 계산기</h1>
-
-    <label for="contractAmount">계약금액(천단위 구분): </label>
-    <input type="text" id="contractAmount" oninput="formatAmount(this)" placeholder="1,000,000">
-
-    <label for="category">용역 유형: </label>
-    <select id="category" onchange="handleCategoryChange()">
-        <option value="설계등용역">설계 등 용역</option>
-        <option value="감리CM용역">감리 CM 용역</option>
-        <option value="설계공모">설계 공모</option>
-    </select>
-
-    <div id="rateTypeContainer">
-        <button onclick="calculateFee('제안')">제안</button>
-        <button onclick="calculateFee('PQ')">PQ</button>
-        <button onclick="calculateFee('비PQ')">비PQ</button>
+    <div id="calculatorContainer">
+        <h1>용역조달 수수료 계산기</h1>
+        <label for="contractAmount">계약금액(천단위 구분): </label>
+        <input type="text" id="contractAmount" oninput="formatAmount(this)" placeholder="1,000,000"><br>
+        <label for="category">용역 유형: </label>
+        <select id="category" onchange="handleCategoryChange()">
+            <option value="설계등용역">설계 등 용역</option>
+            <option value="감리CM용역">감리 CM 용역</option>
+            <option value="설계공모">설계 공모</option>
+        </select>
+        <div id="rateTypeContainer">
+            <button onclick="calculateFee('제안')">제안</button>
+            <button onclick="calculateFee('PQ')">PQ</button>
+            <button onclick="calculateFee('비PQ')">비PQ</button>
+        </div>
+        <h3>산출내역</h3>
+        <div id="result"></div>
+        <p>※ 이 프로그램은 계약조건에 따라 수수료가 변경될 수도 있습니다!</p>
     </div>
-
-    <h3>산출내역</h3>
-    <div id="result"></div>
-
-    <p>※ 이 프로그램은 계약조건에 따라 수수료가 변경될 수도 있습니다!</p>
-
     <script>
         // 천 단위 콤마 표시 함수
         function formatAmount(input) {
