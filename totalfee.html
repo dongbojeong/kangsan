@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>총사업비검토대가 수수료 계산 프로그램</title>
+    <script>
+        function calculateFee() {
+            const amount = parseFloat(document.getElementById("amount").value.replace(/,/g, ""));
+            const institutionType = document.querySelector('input[name="institutionType"]:checked').value;
+            const rateType = document.getElementById("rateType").value;
+            
+            let rate = 0;
+            if (rateType === "implementation") {
+                if (institutionType === "local") {
+                    rate = amount > 10000000000 ? 0.0002 : 0.0004;
+                } else {
+                    rate = 0.0004;
+                }
+            } else if (rateType === "priceChange") {
+                rate = 0.001;
+            } else if (rateType === "privateProject") {
+                rate = 0.0005;
+            } else if (rateType === "designChange") {
+                rate = 0.0005;
+            }
+
+            const fee = Math.floor(amount * rate / 10) * 10;
+            document.getElementById("result").textContent = `검토대가: ${fee.toLocaleString()} 원`;
+        }
+
+        function formatAmountInput(input) {
+            let value = input.value.replace(/,/g, "");
+            if (!isNaN(value) && value !== "") {
+                input.value = parseFloat(value).toLocaleString();
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>총사업비검토 수수료 계산기</h1>
+    <label for="amount">검토요청 금액 (원):</label>
+    <input type="text" id="amount" oninput="formatAmountInput(this)" placeholder="값을 입력하세요">
+    <br><br>
+
+    <label>국가, 기타기관</label>
+    <input type="radio" name="institutionType" value="national" checked> 국가
+    <input type="radio" name="institutionType" value="local"> 지방자치단체
+    <br><br>
+
+    <label for="rateType">요율 선택:</label>
+    <select id="rateType">
+        <option value="implementation">실시설계단가 적정성 검토</option>
+        <option value="priceChange">물가변동 검토</option>
+        <option value="privateProject">민자사업 검토</option>
+        <option value="designChange">설계변경 단가적정성 검토</option>
+    </select>
+    <br><br>
+
+    <button onclick="calculateFee()">계산</button>
+    <h2 id="result"></h2>
+</body>
+</html>
