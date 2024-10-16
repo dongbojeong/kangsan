@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>맞춤형서비스 조달수수료 계산</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        .calculator-container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            width: 600px;
+            text-align: center;
+        }
+        .calculator-container input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-align: right;
+        }
+        .calculator-container select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .calculator-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        .calculator-container button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            white-space: pre-wrap;
+        }
+    </style>
+    <script>
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function calculateFee() {
+            let amountInput = document.getElementById("amount").value;
+            let amount = parseFloat(amountInput.replace(/,/g, ''));
+            if (isNaN(amount) || amount <= 0) {
+                alert("유효한 금액을 입력해주세요.");
+                return;
+            }
+            let option = document.getElementById("optionSelect").value;
+            let fee = 0;
+            let calculationDetails = `계약금액 ${formatNumber(amount)}원을 기준할시 아래 계산에 따라\n`;
+
+            if (option === "심의대행(일괄기본)" || option === "심의대행(실시대안)" || option === "관급자재선정" || option === "설계공모" || 
+                option === "기획·설계관리(일반공사)" || option === "기획·설계관리(일괄기술제안)" || option === "시공관리(건설사업관리)" || option === "시공관리(감독권한대행 등 건설사업관리)") {
+                let baseRates = {
+                    "심의대행(일괄기본)": [0.00056, 0.00049, 0.00041, 0.00037],
+                    "심의대행(실시대안)": [0.00037, 0.00032, 0.00028, 0.00025],
+                    "관급자재선정": [0.00004, 0.00003, 0.00003, 0.00002],
+                    "설계공모": [0.00084, 0.00073, 0.00062, 0.00056],
+                    "기획·설계관리(일반공사)": [0.00462, 0.0042, 0.00336, 0.00302],
+                    "기획·설계관리(일괄기술제안)": [0.00396, 0.0036, 0.00288, 0.00259],
+                    "시공관리(건설사업관리)": [0.00846, 0.00736, 0.00626, 0.00562],
+                    "시공관리(감독권한대행 등 건설사업관리)": [0.00677, 0.00598, 0.00501, 0.0045]
+                };
+
+                let baseAmounts = [10000000000, 50000000000, 100000000000];
+                let rates = baseRates[option];
+                let baseFeeTotal = 0;
+
+                for (let i = 0; i < baseAmounts.length; i++) {
+                    if (amount > baseAmounts[i]) {
+                        let previousAmount = i === 0 ? 0 : baseAmounts[i - 1];
+                        let baseAmount = baseAmounts[i] - previousAmount;
+                        let rate = rates[i];
+                        let baseFee = baseAmount * rate;
+                        baseFeeTotal += baseFee;
+                        calculationDetails += `${formatNumber(baseAmount)} * ${rate} = ${formatNumber(baseFee.toFixed(2))}\n`;
+                    } else {
+                        let remainingAmount = amount - (i === 0 ? 0 : baseAmounts[i - 1]);
+                        let rate = rates[i];
+                        let baseFee = remainingAmount * rate;
+                        baseFeeTotal += baseFee;
+                        calculationDetails += `${formatNumber(remainingAmount)} * ${rate} = ${formatNumber(baseFee.toFixed(2))}\n`;
+                        break;
+                    }
+                }
+
+                if (amount > baseAmounts[baseAmounts.length - 1]) {
+                    let additionalAmount = amount - baseAmounts[baseAmounts.length - 1];
+                    let additionalRate = rates[rates.length - 1];
+                    let additionalFee = additionalAmount * additionalRate;
+                    baseFeeTotal += additionalFee;
+                    calculationDetails += `(${formatNumber(additionalAmount)}) * ${additionalRate} = ${formatNumber(additionalFee.toFixed(2))}\n`;
+                }
+
+                fee = Math.floor(baseFeeTotal / 10) * 10;
+            } else {
+                alert("유효한 옵션을 선택해주세요.");
+                return;
+            }
+
+            calculationDetails += `수수료: ${formatNumber(fee)} 원`;
+            document.getElementById("result").innerText = calculationDetails;
+        }
+
+        function formatInput() {
+            let amountInput = document.getElementById("amount");
+            let value = amountInput.value.replace(/,/g, '');
+            if (!isNaN(value) && value !== "") {
+                amountInput.value = formatNumber(value);
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="calculator-container">
+        <h2>맞춤형서비스 조달수수료 계산</h2>
+        <input type="text" id="amount" placeholder="검토 요청 금액 입력" onkeyup="formatInput()">
+        <select id="optionSelect">
+            <option value="">적용기준 선택</option>
+            <option value="심의대행(일괄기본)">심의대행(일괄기본)</option>
+            <option value="심의대행(실시대안)">심의대행(실시대안)</option>
+            <option value="관급자재선정">심의대행(관급자재선정)</option>
+            <option value="설계공모">심의대행(설계공모)</option>
+            <option value="기획·설계관리(일반공사)">기획·설계관리(일반공사)</option>
+            <option value="기획·설계관리(일괄기술제안)">기획·설계관리(일괄기술제안)</option>
+            <option value="시공관리(건설사업관리)">시공관리(건설사업관리)</option>
+            <option value="시공관리(감독권한대행 등 건설사업관리)">시공관리(감독권한대행 등 건설사업관리)</option>
+        </select>
+        <button onclick="calculateFee()">수수료 계산</button>
+        <div id="result" class="result"></div>
+    </div>
+</body>
+</html>
