@@ -54,10 +54,13 @@
         <tr>
             <th>예가 범위 선택</th>
             <td>
-                <select id="rangeSelector">
+                <select id="rangeSelector" onchange="toggleCustomRangeInput()">
                     <option value="0.02">±2%</option>
                     <option value="0.03">±3%</option>
+                    <option value="0.025">±2.5%</option>
+                    <option value="custom">직접 입력</option>
                 </select>
+                <input type="number" id="customRange" placeholder="직접 입력 (%)" style="width: 100px; display: none;" />
             </td>
         </tr>
     </table>
@@ -84,11 +87,22 @@
 
 <script>
 let estimateList = [];
+let finalPriceElement = document.getElementById('finalPrice');
 
 function formatPrice(input) {
     let value = input.value.replace(/,/g, '');
     if (isNaN(value)) return;
     input.value = Number(value).toLocaleString();
+}
+
+function toggleCustomRangeInput() {
+    const rangeSelector = document.getElementById('rangeSelector');
+    const customRangeInput = document.getElementById('customRange');
+    if (rangeSelector.value === 'custom') {
+        customRangeInput.style.display = 'inline-block';
+    } else {
+        customRangeInput.style.display = 'none';
+    }
 }
 
 function calculateEstimates() {
@@ -115,7 +129,15 @@ function calculateEstimates() {
     }
 
     // 예가 범위 선택
-    const selectedRange = parseFloat(document.getElementById('rangeSelector').value);
+    const rangeSelector = document.getElementById('rangeSelector');
+    let selectedRange = parseFloat(rangeSelector.value);
+    if (rangeSelector.value === 'custom') {
+        selectedRange = parseFloat(document.getElementById('customRange').value) / 100;
+        if (isNaN(selectedRange)) {
+            alert('예가 범위를 입력해주세요.');
+            return;
+        }
+    }
 
     estimateList = [];
     for (let i = 0; i < 15; i++) {
@@ -132,6 +154,7 @@ function displayEstimates(estimateList, basePrice) {
     estimateList.forEach((estimate, index) => {
         const rate = ((estimate / basePrice) * 100).toFixed(3);  // 기초금액 대비 비율 소수점 3자리까지 계산
 
+        const row = document.createElement('tr');
         row.innerHTML = `
             <td><input type="checkbox" class="estimate-checkbox" value="${estimate}"></td>
             <td>${index + 1}</td>
@@ -178,9 +201,9 @@ function calculateFinalPrice(estimates, lowerBound) {
     // 낙찰 하한율 이하로 계산된 금액이 나오는 것을 방지 (소수점 3자리까지 비교)
     if (parseFloat(finalRate) < lowerBound.toFixed(3)) {
         alert('최종 낙찰 금액이 낙찰하한율 이하로 내려갈 수 없습니다.');
-        document.getElementById('finalPrice').innerText = "계산 불가";
+        finalPriceElement.innerText = "계산 불가";
     } else {
-        document.getElementById('finalPrice').innerHTML = `${finalPrice.toLocaleString()} 원 (${finalRate}%)`;
+        finalPriceElement.innerHTML = `${finalPrice.toLocaleString()} 원 (${finalRate}%)`;
     }
 }
 </script>
