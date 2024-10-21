@@ -5,29 +5,42 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
+    
     <style>
-        .container {
-            width: 80%;
-            margin: auto;
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
             font-family: 'Noto Sans', sans-serif;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            width: 90%;
+            padding: 2rem;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
         }
         table {
             width: 100%;
-            margin-bottom: 20px;
             border-collapse: collapse;
-            text-align: left;
+            margin-bottom: 1rem;
         }
         th, td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
+            padding: 0.75rem;
+            border-bottom: 1px solid #e0e0e0;
         }
         .btn {
             background-color: #4CAF50;
             color: white;
-            padding: 10px 20px;
-            margin: 10px;
-            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
         .btn:hover {
             background-color: #45a049;
@@ -36,7 +49,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>낙찰가 예상 계산기</h1>
+    <h1 style="text-align: center;">낙찰가 예상 계산기</h1>
     <table>
         <tr>
             <th>기초금액 입력</th>
@@ -61,6 +74,13 @@
                     <option value="custom">직접 입력</option>
                 </select>
                 <input type="number" id="customRange" placeholder="직접 입력 (%)" style="width: 100px; display: none;" />
+            </td>
+        </tr>
+        <tr>
+            <th>특정지정금액 사용</th>
+            <td>
+                <input type="checkbox" id="useSpecificAmount" onchange="toggleSpecificAmountInput()">
+                <input type="text" id="specificAmount" placeholder="특정지정금액 입력 (원)" oninput="formatPrice(this)" style="display: none;">
             </td>
         </tr>
     </table>
@@ -103,6 +123,11 @@ function toggleCustomRangeInput() {
     } else {
         customRangeInput.style.display = 'none';
     }
+}
+
+function toggleSpecificAmountInput() {
+    const specificAmountInput = document.getElementById('specificAmount');
+    specificAmountInput.style.display = document.getElementById('useSpecificAmount').checked ? 'inline-block' : 'none';
 }
 
 function calculateEstimates() {
@@ -193,13 +218,21 @@ function autoSelect() {
 
 function calculateFinalPrice(estimates, lowerBound) {
     const averageEstimate = estimates.reduce((acc, price) => acc + price, 0) / estimates.length;
-    const finalPrice = Math.round(averageEstimate * (lowerBound / 100));
-
     const basePrice = parseFloat(document.getElementById('basePrice').value.replace(/,/g, ''));
-    const finalRate = ((finalPrice / basePrice) * 100).toFixed(3);  // 기초금액 대비 비율 소수점 3자리까지 계산
+    
+    let finalPrice = Math.round(averageEstimate * (lowerBound / 100));
+    let finalRate = ((finalPrice / basePrice) * 100).toFixed(3);
 
-    // 낙찰 하한율 이하로 계산된 금액이 나오는 것을 방지 (소수점 3자리까지 비교)
-    if (parseFloat(finalRate) < lowerBound.toFixed(3)) {
+    const useSpecificAmount = document.getElementById('useSpecificAmount').checked;
+    const specificAmount = useSpecificAmount ? parseFloat(document.getElementById('specificAmount').value.replace(/,/g, '')) : 0;
+
+    if (useSpecificAmount && finalPrice < specificAmount) {
+        alert('산출된 결과값이 특정지정금액보다 작습니다. 다시 산출해주세요.');
+        finalPriceElement.innerText = "재산출 필요";
+        return;
+    }
+
+    if (parseFloat(finalRate) < lowerBound) {
         alert('최종 낙찰 금액이 낙찰하한율 이하로 내려갈 수 없습니다.');
         finalPriceElement.innerText = "계산 불가";
     } else {
