@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="ko">
 <head>
-    <title>입찰 복수예가 산출 프로그램</title>
+    <title>시설공사 투찰 계산</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
@@ -49,7 +49,7 @@
 </head>
 <body>
 <div class="container">
-    <h1 style="text-align: center;">낙찰가 예상 계산기</h1>
+    <h1 style="text-align: center;">시설공사 투찰 계산</h1>
     <table>
         <tr>
             <th>기초금액 입력</th>
@@ -77,14 +77,30 @@
             </td>
         </tr>
         <tr>
-            <th>특정지정금액 사용</th>
+            <th>최저 낙찰가 지정금액</th>
             <td>
                 <input type="checkbox" id="useSpecificAmount" onchange="toggleSpecificAmountInput()">
-                <input type="text" id="specificAmount" placeholder="특정지정금액 입력 (원)" oninput="formatPrice(this)" style="display: none;">
+                <input type="text" id="specificAmount" placeholder="최저낙찰가지정금액 (원)" oninput="formatPrice(this)" style="display: none;">
+                <br>
+                <span style="font-size: 0.9em; color: #666;">* 참고사항: 입찰공고중 최저 낙찰가 지정금액이 확정된 경우 체크후 사용하시기 바랍니다.</span>
             </td>
         </tr>
     </table>
-    <button class="btn" onclick="calculateEstimates()">예가 산출</button>
+    <div style="text-align: center; margin: 20px 0;">
+        <button class="btn" onclick="calculateEstimates()" style="font-size: 1.2em; padding: 10px 20px; background-color: #007bff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">예가 산출</button>
+    </div>
+    
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+    
+    <h3 style="text-align: center;">복수예비가격 선택</h3>
+    <div style="display: flex; justify-content: center; gap: 10px;">
+        <button class="btn" onclick="manualSelect()">임의 선택 (4개의 예비가격을 체크해 주세요)</button>
+        <button class="btn" onclick="autoSelect()">자동 선택</button>
+        <button class="btn" onclick="gangsanRecommend()">강산추천</button>
+    </div>
+    
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+    
     <h3>산출된 복수예비가격:</h3>
     <table id="estimateTable">
         <thead>
@@ -98,11 +114,12 @@
         <tbody></tbody>
     </table>
 
-    <h3>최종 낙찰 가능 금액:</h3>
-    <p id="finalPrice"></p>
-    <h3>복수예비가격 선택:</h3>
-    <button class="btn" onclick="manualSelect()">임의 선택 (4개의 예비가격을 체크해 주세요)</button>
-    <button class="btn" onclick="autoSelect()">자동 선택</button>
+    <h3 style="text-align: center;">최종투찰금액</h3>
+    <div style="display: flex; justify-content: center; align-items: center; margin: 20px 0;">
+        <div style="border: 2px solid #007bff; border-radius: 10px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p id="finalPrice" style="font-weight: bold; text-align: center; font-size: 1.5em; color: darkblue; margin: 0;"></p>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -198,46 +215,116 @@ function manualSelect() {
     }
     
     const selectedEstimates = Array.from(checkboxes).map(cb => parseInt(cb.value));
-    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
-    const lowerBound = selectedLowerBound.value === 'custom' 
-        ? parseFloat(document.getElementById('customLowerBound').value) 
-        : parseFloat(selectedLowerBound.value);
-
-    calculateFinalPrice(selectedEstimates, lowerBound);
+    calculateFinalPrice(selectedEstimates, true);
 }
 
 function autoSelect() {
     const selectedEstimates = estimateList.slice(0, 4);  // 자동으로 상위 4개의 예비가격 선택
-    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
-    const lowerBound = selectedLowerBound.value === 'custom' 
-        ? parseFloat(document.getElementById('customLowerBound').value) 
-        : parseFloat(selectedLowerBound.value);
-
-    calculateFinalPrice(selectedEstimates, lowerBound);
+    calculateFinalPrice(selectedEstimates, true);
 }
 
-function calculateFinalPrice(estimates, lowerBound) {
-    const averageEstimate = estimates.reduce((acc, price) => acc + price, 0) / estimates.length;
+function calculateFinalPrice(estimates, showPopupOnLowPrice = false) {
     const basePrice = parseFloat(document.getElementById('basePrice').value.replace(/,/g, ''));
     
-    let finalPrice = Math.round(averageEstimate * (lowerBound / 100));
-    let finalRate = ((finalPrice / basePrice) * 100).toFixed(3);
+    // 선택된 4개 예비가격의 산술평균 계산
+    const averageEstimate = estimates.reduce((acc, price) => acc + price, 0) / estimates.length;
+    let finalPrice = Math.round(averageEstimate);
+
+    // 각 예비가격의 기초금액 대비 비율 계산 후 평균
+    const rates = estimates.map(estimate => (estimate / basePrice) * 100);
+    let finalRate = (rates.reduce((acc, rate) => acc + rate, 0) / rates.length).toFixed(3);
 
     const useSpecificAmount = document.getElementById('useSpecificAmount').checked;
     const specificAmount = useSpecificAmount ? parseFloat(document.getElementById('specificAmount').value.replace(/,/g, '')) : 0;
 
     if (useSpecificAmount && finalPrice < specificAmount) {
-        alert('산출된 결과값이 특정지정금액보다 작습니다. 다시 산출해주세요.');
+        showPopup('산출된 결과값이 특정지정금액보다 작습니다. 다시 산출해주세요.');
         finalPriceElement.innerText = "재산출 필요";
         return;
     }
 
+    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
+    const lowerBound = selectedLowerBound.value === 'custom' 
+        ? parseFloat(document.getElementById('customLowerBound').value) 
+        : parseFloat(selectedLowerBound.value);
+
     if (parseFloat(finalRate) < lowerBound) {
-        alert('최종 낙찰 금액이 낙찰하한율 이하로 내려갈 수 없습니다.');
-        finalPriceElement.innerText = "계산 불가";
+        if (showPopupOnLowPrice) {
+            showPopup('최종 낙찰 금액이 낙찰하한율 이하입니다. 예가산출을 다시 해주세요.');
+        }
+        finalPriceElement.innerText = "재산출 필요";
     } else {
         finalPriceElement.innerHTML = `${finalPrice.toLocaleString()} 원 (${finalRate}%)`;
     }
+}
+
+function showPopup(message) {
+    // 기존 팝업 제거
+    const existingPopup = document.getElementById('customPopup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+
+    // 새 팝업 생성
+    const popup = document.createElement('div');
+    popup.id = 'customPopup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+    `;
+
+    const messageElement = document.createElement('p');
+    messageElement.textContent = message;
+
+    const closeButton = document.createElement('button');
+    closeButton.textContent = '확인';
+    closeButton.onclick = () => popup.remove();
+    closeButton.style.cssText = `
+        margin-top: 10px;
+        padding: 5px 10px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    `;
+
+    popup.appendChild(messageElement);
+    popup.appendChild(closeButton);
+    document.body.appendChild(popup);
+}
+
+function gangsanRecommend() {
+    const basePrice = parseFloat(document.getElementById('basePrice').value.replace(/,/g, ''));
+    if (isNaN(basePrice)) {
+        alert('기초금액을 입력해주세요.');
+        return;
+    }
+
+    const gangsanRange = 0.016; // 1.6%
+    estimateList = [];
+    for (let i = 0; i < 15; i++) {
+        const variation = (Math.random() * 2 - 1) * gangsanRange; // -1.6% ~ +1.6% 범위
+        const estimate = basePrice * (1 + variation);
+        estimateList.push(Math.round(estimate));
+    }
+    estimateList.sort((a, b) => b - a); // 내림차순 정렬
+    displayEstimates(estimateList, basePrice);
+
+    // 상위 4개의 예비가격 선택
+    const selectedEstimates = estimateList.slice(0, 4);
+    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
+    const lowerBound = selectedLowerBound.value === 'custom' 
+        ? parseFloat(document.getElementById('customLowerBound').value) 
+        : parseFloat(selectedLowerBound.value);
+
+    calculateFinalPrice(selectedEstimates, true);
 }
 </script>
 </body>
