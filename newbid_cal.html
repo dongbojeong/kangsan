@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="ko">
 <head>
-    <title>시설공사 투찰 계산</title>
+    <title>입찰가격 예측</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
@@ -49,7 +49,7 @@
 </head>
 <body>
 <div class="container">
-    <h1 style="text-align: center;">시설공사 투찰 계산</h1>
+    <h1 style="text-align: center;">입찰가격예측계산(시설공사)</h1>
     <table>
         <tr>
             <th>기초금액 입력</th>
@@ -77,6 +77,14 @@
             </td>
         </tr>
         <tr>
+            <th>A값 입력</th>
+            <td>
+                <input type="text" id="aValue" placeholder="A값 입력 (원)" oninput="formatPrice(this)" />
+                <br>
+                <span style="font-size: 0.9em; color: #666;">* A값이 있는 경우에만 입력하세요.</span>
+            </td>
+        </tr>
+        <tr>
             <th>최저 낙찰가 지정금액</th>
             <td>
                 <input type="checkbox" id="useSpecificAmount" onchange="toggleSpecificAmountInput()">
@@ -87,37 +95,69 @@
         </tr>
     </table>
     <div style="text-align: center; margin: 20px 0;">
-        <button class="btn" onclick="calculateEstimates()" style="font-size: 1.2em; padding: 10px 20px; background-color: #007bff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">예가 산출</button>
+        <button class="btn" onclick="calculateAndAutoSelect()" style="font-size: 1.2em; padding: 10px 20px; background-color: #007bff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">입찰가격산출</button>
     </div>
     
-    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-    
-    <h3 style="text-align: center;">복수예비가격 선택</h3>
-    <div style="display: flex; justify-content: center; gap: 10px;">
-        <button class="btn" onclick="manualSelect()">임의 선택 (4개의 예비가격을 체크해 주세요)</button>
-        <button class="btn" onclick="autoSelect()">자동 선택</button>
-        <button class="btn" onclick="gangsanRecommend()">강산추천</button>
+    <div style="text-align: center; margin: 20px 0;">
+        <h3>최종투찰금액</h3>
+        <div style="display: flex; justify-content: center; align-items: center; margin: 20px 0;">
+            <div style="border: 2px solid #007bff; border-radius: 10px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <p id="finalPrice" style="font-weight: bold; text-align: center; font-size: 1.5em; color: darkblue; margin: 0;"></p>
+            </div>
+        </div>
     </div>
     
-    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-    
-    <h3>산출된 복수예비가격:</h3>
-    <table id="estimateTable">
-        <thead>
-            <tr>
-                <th>선택</th>
-                <th>예비가격 번호</th>
-                <th>예비가격 (원)</th>
-                <th>기초금액 대비 비율 (%)</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+        <h3 style="color: #007bff; margin-bottom: 15px;">📋 입찰가격예측계산 사용설명서</h3>
+        
+        <div style="text-align: left;">
+            <h4 style="color: #495057; margin: 15px 0 10px 0;">1. 기본 정보 입력</h4>
+            <ul style="color: #666; line-height: 1.6;">
+                <li>기초금액: 공고문에 명시된 기초금액을 입력합니다.</li>
+                <li>낙찰 하한율: 공고문에 명시된 낙찰하한율을 선택하거나 직접 입력합니다.</li>
+                <li>예가 범위: 복수예가 산정 범위를 선택합니다. (일반적으로 ±2%)</li>
+            </ul>
 
-    <h3 style="text-align: center;">최종투찰금액</h3>
-    <div style="display: flex; justify-content: center; align-items: center; margin: 20px 0;">
-        <div style="border: 2px solid #007bff; border-radius: 10px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <p id="finalPrice" style="font-weight: bold; text-align: center; font-size: 1.5em; color: darkblue; margin: 0;"></p>
+            <h4 style="color: #495057; margin: 15px 0 10px 0;">2. 선택 사항</h4>
+            <ul style="color: #666; line-height: 1.6;">
+                <li>A값: A값이 있는 경우에만 입력합니다.</li>
+                <li>최저 낙찰가 지정금액: 입찰공고에 명시된 경우에만 체크 후 입력합니다.</li>
+            </ul>
+
+            <h4 style="color: #495057; margin: 15px 0 10px 0;">3. 결과 확인</h4>
+            <ul style="color: #666; line-height: 1.6;">
+                <li>'입찰가격산출' 버튼을 클릭하면 자동으로 최종투찰금액이 계산됩니다.</li>
+                <li>산출된 복수예비가격 상세보기를 클릭하면 세부 내역을 확인할 수 있습니다.</li>
+            </ul>
+
+            <h4 style="color: #495057; margin: 15px 0 10px 0;">⚠️ 주의사항</h4>
+            <ul style="color: #666; line-height: 1.6;">
+                <li>산출된 금액이 낙찰하한율 미만일 경우 "재산출 필요"로 표시됩니다.</li>
+                <li>최저 낙찰가 지정금액이 설정된 경우, 산출된 금액이 이보다 낮으면 재산출이 필요합니다.</li>
+                <li>본 계산기는 참고용으로만 사용하시기 바랍니다.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+    
+    <div class="details-section">
+        <button class="btn-toggle" onclick="toggleDetails()" style="width: 100%; padding: 10px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <span>산출된 복수예비가격 상세보기</span>
+            <span id="toggle-icon">▼</span>
+        </button>
+        <div id="details-content" style="display: none; margin-top: 20px;">
+            <table id="estimateTable">
+                <thead>
+                    <tr>
+                        <th>선택</th>
+                        <th>예비가격 번호</th>
+                        <th>예비가격 (원)</th>
+                        <th>기초금액 대비 비율 (%)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -207,32 +247,59 @@ function displayEstimates(estimateList, basePrice) {
     });
 }
 
-function manualSelect() {
-    const checkboxes = document.querySelectorAll('.estimate-checkbox:checked');
-    if (checkboxes.length !== 4) {
-        alert('4개의 예비가격을 선택해주세요.');
-        return;
+function toggleDetails() {
+    const content = document.getElementById('details-content');
+    const icon = document.getElementById('toggle-icon');
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.textContent = '▲';
+    } else {
+        content.style.display = 'none';
+        icon.textContent = '▼';
     }
-    
-    const selectedEstimates = Array.from(checkboxes).map(cb => parseInt(cb.value));
-    calculateFinalPrice(selectedEstimates, true);
 }
 
-function autoSelect() {
+function calculateAndAutoSelect() {
+    calculateEstimates();
     const selectedEstimates = estimateList.slice(0, 4);  // 자동으로 상위 4개의 예비가격 선택
     calculateFinalPrice(selectedEstimates, true);
+    
+    // 상위 4개 체크박스 자동 선택
+    const checkboxes = document.querySelectorAll('.estimate-checkbox');
+    checkboxes.forEach((checkbox, index) => {
+        checkbox.checked = index < 4;
+    });
+
+    // 자동으로 상세 내용을 표시하는 코드 제거
+    // document.getElementById('details-content').style.display = 'block';
+    // document.getElementById('toggle-icon').textContent = '▲';
 }
 
 function calculateFinalPrice(estimates, showPopupOnLowPrice = false) {
     const basePrice = parseFloat(document.getElementById('basePrice').value.replace(/,/g, ''));
+    const aValueInput = document.getElementById('aValue');
+    const hasAValue = aValueInput.value !== '';
+    const aValue = hasAValue ? parseFloat(aValueInput.value.replace(/,/g, '')) : 0;
     
     // 선택된 4개 예비가격의 산술평균 계산
     const averageEstimate = estimates.reduce((acc, price) => acc + price, 0) / estimates.length;
-    let finalPrice = Math.round(averageEstimate);
+    
+    // 기초금액 대비 비율 계산 (%)
+    const finalRate = ((averageEstimate / basePrice) * 100).toFixed(3);
+    
+    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
+    const lowerBound = selectedLowerBound.value === 'custom' 
+        ? parseFloat(document.getElementById('customLowerBound').value) 
+        : parseFloat(selectedLowerBound.value);
 
-    // 각 예비가격의 기초금액 대비 비율 계산 후 평균
-    const rates = estimates.map(estimate => (estimate / basePrice) * 100);
-    let finalRate = (rates.reduce((acc, rate) => acc + rate, 0) / rates.length).toFixed(3);
+    let finalPrice;
+    if (hasAValue) {
+        // 새로운 수식 적용: {(기초금액*산출된 복수예가에서 기초금액 대비 비율-A값)*낙찰하한율)}+A값
+        const rate = averageEstimate / basePrice;
+        finalPrice = Math.round(((basePrice * rate - aValue) * (lowerBound/100)) + aValue);
+    } else {
+        finalPrice = Math.round(averageEstimate);
+    }
 
     const useSpecificAmount = document.getElementById('useSpecificAmount').checked;
     const specificAmount = useSpecificAmount ? parseFloat(document.getElementById('specificAmount').value.replace(/,/g, '')) : 0;
@@ -242,11 +309,6 @@ function calculateFinalPrice(estimates, showPopupOnLowPrice = false) {
         finalPriceElement.innerText = "재산출 필요";
         return;
     }
-
-    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
-    const lowerBound = selectedLowerBound.value === 'custom' 
-        ? parseFloat(document.getElementById('customLowerBound').value) 
-        : parseFloat(selectedLowerBound.value);
 
     if (parseFloat(finalRate) < lowerBound) {
         if (showPopupOnLowPrice) {
@@ -298,33 +360,6 @@ function showPopup(message) {
     popup.appendChild(messageElement);
     popup.appendChild(closeButton);
     document.body.appendChild(popup);
-}
-
-function gangsanRecommend() {
-    const basePrice = parseFloat(document.getElementById('basePrice').value.replace(/,/g, ''));
-    if (isNaN(basePrice)) {
-        alert('기초금액을 입력해주세요.');
-        return;
-    }
-
-    const gangsanRange = 0.016; // 1.6%
-    estimateList = [];
-    for (let i = 0; i < 15; i++) {
-        const variation = (Math.random() * 2 - 1) * gangsanRange; // -1.6% ~ +1.6% 범위
-        const estimate = basePrice * (1 + variation);
-        estimateList.push(Math.round(estimate));
-    }
-    estimateList.sort((a, b) => b - a); // 내림차순 정렬
-    displayEstimates(estimateList, basePrice);
-
-    // 상위 4개의 예비가격 선택
-    const selectedEstimates = estimateList.slice(0, 4);
-    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
-    const lowerBound = selectedLowerBound.value === 'custom' 
-        ? parseFloat(document.getElementById('customLowerBound').value) 
-        : parseFloat(selectedLowerBound.value);
-
-    calculateFinalPrice(selectedEstimates, true);
 }
 </script>
 </body>
