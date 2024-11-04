@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공사조달 수수료 계산기</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .calculator-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            margin: auto;
+        }
+        label, select, input, button {
+            margin: 10px 0;
+        }
+        button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <h1>공사조달 수수료 계산기</h1>
+        <label for="contractAmount">계약금액(천단위 구분): </label>
+        <input type="text" id="contractAmount" oninput="formatAmount(this)" placeholder="1,000,000">
+        <script>
+            document.getElementById('contractAmount').addEventListener('input', function (e) {
+                let value = e.target.value.replace(/,/g, ''); // 기존 입력값에서 콤마 제거
+                if (!isNaN(value) && value.length > 0) {
+                    e.target.value = parseFloat(value).toLocaleString('ko-KR'); // 천 단위로 표시
+                } else {
+                    e.target.value = ''; // 숫자가 아닐 경우 빈 값 처리
+                }
+            });
+        </script>
+        <label for="category">구분: </label>
+        <select id="category">
+            <option value="국가기관">국가기관</option>
+            <option value="지방자치단체">지방자치단체</option>
+        </select>
+        <div id="rateTypeContainer">
+            <label for="rateType">요율: </label>
+            <button onclick="calculateFee('A')">A Type</button>
+            <button onclick="calculateFee('B')">B Type</button>
+            <button onclick="calculateFee('C')">C Type</button>
+            <button onclick="calculateFee('D')">D Type</button>
+        </div>
+        <h3>산출내역</h3>
+        <div id="result"></div>
+        <p>※ 이 프로그램은 계약조건에 따라 수수료가 변경될 수도 있습니다!</p>
+    </div>
+    <script>
+        function formatAmount(input) {
+            input.value = input.value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+        const rates = {
+            "국가기관": {
+                "A": {
+                    "10억이하": 0.004,
+                    "10억초과50억이하": 0.003,
+                    "50억초과100억이하": 0.0015,
+                    "100억초과500억이하": 0.0007,
+                    "500억초과": 0.0006
+                },
+                "B": {
+                    "10억이하": 0.0035,
+                    "10억초과50억이하": 0.025,
+                    "50억초과100억이하": 0.012,
+                    "100억초과500억이하": 0.0006,
+                    "500억초과": 0.0005
+                },
+                "C": {
+                    "10억이하": 0.003,
+                    "10억초과50억이하": 0.002,
+                    "50억초과100억이하": 0.001,
+                    "100억초과500억이하": 0.0005,
+                    "500억초과": 0.00045
+                },
+                "D": {
+                    "10억이하": 0.002,
+                    "10억초과50억이하": 0.001,
+                    "50억초과100억이하": 0.0005,
+                    "100억초과500억이하": 0.0002,
+                    "500억초과": 0.00015
+                }
+            },
+            "지방자치단체": {
+                "A": {
+                    "10억이하": 0.003,
+                    "10억초과50억이하": 0.0015,
+                    "50억초과100억이하": 0.0007,
+                    "100억초과500억이하": 0.0004,
+                    "500억초과": 0.00035
+                },
+                "B": {
+                    "10억이하": 0.0025,
+                    "10억초과50억이하": 0.0012,
+                    "50억초과100억이하": 0.0006,
+                    "100억초과500억이하": 0.0003,
+                    "500억초과": 0.00025
+                },
+                "C": {
+                    "10억이하": 0.002,
+                    "10억초과50억이하": 0.001,
+                    "50억초과100억이하": 0.0005,
+                    "100억초과500억이하": 0.0002,
+                    "500억초과": 0.00015
+                },
+                "D": {
+                    "10억이하": 0.001,
+                    "10억초과50억이하": 0.0005,
+                    "50억초과100억이하": 0.0002,
+                    "100억초과500억이하": 0.0001,
+                    "500억초과": 0.0001
+                }
+            }
+        };
+        function calculateFee(type) {
+            const amountString = document.getElementById('contractAmount').value.replace(/,/g, '');
+            const contractAmount = parseFloat(amountString);
+            const category = document.getElementById('category').value;
+            const rate = getRateForAmount(contractAmount, rates[category][type]);
+            if (!isNaN(contractAmount) && rate) {
+                const fee = contractAmount * rate;
+                const truncatedFee = Math.floor(fee / 10) * 10; // 원 단위 절삭
+                document.getElementById('result').innerHTML = `
+                    계약금액 ${contractAmount.toLocaleString()}원을 기준할시 아래 계산에 따라<br>
+                    ${contractAmount.toLocaleString()} * ${rate} = ${fee.toFixed(3)}<br>
+                    수수료: ${truncatedFee.toLocaleString()} 원
+                `;
+            } else {
+                document.getElementById('result').innerHTML = "계약금액을 입력해 주세요.";
+            }
+        }
+        function getRateForAmount(amount, rateTable) {
+            if (amount <= 1000000000) {
+                return rateTable["10억이하"];
+            } else if (amount <= 50000000000) {
+                return rateTable["10억초과50억이하"];
+            } else if (amount <= 100000000000) {
+                return rateTable["50억초과100억이하"];
+            } else if (amount <= 500000000000) {
+                return rateTable["100억초과500억이하"];
+            } else {
+                return rateTable["500억초과"];
+            }
+        }
+    </script>
+</body>
+</html>
