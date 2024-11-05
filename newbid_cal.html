@@ -262,20 +262,26 @@ function toggleDetails() {
 function calculateAndAutoSelect() {
     calculateEstimates();
     const selectedEstimates = estimateList.slice(0, 4);  // 자동으로 상위 4개의 예비가격 선택
-    calculateFinalPrice(selectedEstimates, true);
+
+    // 낙찰 하한율 계산
+    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
+    let lowerBound = 0;
+    if (selectedLowerBound.value === 'custom') {
+        lowerBound = parseFloat(document.getElementById('customLowerBound').value);
+    } else {
+        lowerBound = parseFloat(selectedLowerBound.value);
+    }
+
+    calculateFinalPrice(selectedEstimates, lowerBound, true);
     
     // 상위 4개 체크박스 자동 선택
     const checkboxes = document.querySelectorAll('.estimate-checkbox');
     checkboxes.forEach((checkbox, index) => {
         checkbox.checked = index < 4;
     });
-
-    // 자동으로 상세 내용을 표시하는 코드 제거
-    // document.getElementById('details-content').style.display = 'block';
-    // document.getElementById('toggle-icon').textContent = '▲';
 }
 
-function calculateFinalPrice(estimates, showPopupOnLowPrice = false) {
+function calculateFinalPrice(estimates, lowerBound, showPopupOnLowPrice = false) {
     const basePrice = parseFloat(document.getElementById('basePrice').value.replace(/,/g, ''));
     const aValueInput = document.getElementById('aValue');
     const hasAValue = aValueInput.value !== '';
@@ -283,24 +289,23 @@ function calculateFinalPrice(estimates, showPopupOnLowPrice = false) {
     
     // 선택된 4개 예비가격의 산술평균 계산
     const averageEstimate = estimates.reduce((acc, price) => acc + price, 0) / estimates.length;
-    
-    // 기초금액 대비 비율 계산 (%)
-    const finalRate = ((averageEstimate / basePrice) * 100).toFixed(3);
-    
-    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
-    const lowerBound = selectedLowerBound.value === 'custom' 
-        ? parseFloat(document.getElementById('customLowerBound').value) 
-        : parseFloat(selectedLowerBound.value);
 
+    // 최종투찰금액 변수 선언
     let finalPrice;
+
     if (hasAValue) {
         // 새로운 수식 적용: {(기초금액*산출된 복수예가에서 기초금액 대비 비율-A값)*낙찰하한율)}+A값
         const rate = averageEstimate / basePrice;
-        finalPrice = Math.round(((basePrice * rate - aValue) * (lowerBound/100)) + aValue);
+        finalPrice = Math.round(((basePrice * rate - aValue) * (lowerBound / 100)) + aValue);
     } else {
-        finalPrice = Math.round(averageEstimate);
+        // A값이 없을 때, 산술평균값의 88% ~ 90% 사이의 랜덤 값으로 설정
+        const randomFactor = 0.88 + Math.random() * (0.90 - 0.88);
+        finalPrice = Math.round(averageEstimate * randomFactor);
     }
 
+    // 최종투찰금액에 비율은 기초금액대비 최종투찰금액이 몇%인지로 수정해줘
+    const finalRate = ((finalPrice / basePrice) * 100).toFixed(3);
+    
     const useSpecificAmount = document.getElementById('useSpecificAmount').checked;
     const specificAmount = useSpecificAmount ? parseFloat(document.getElementById('specificAmount').value.replace(/,/g, '')) : 0;
 
