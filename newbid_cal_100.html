@@ -1,0 +1,372 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="ko">
+<head>
+    <title>종합심사가격 예측</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Noto Sans', sans-serif;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            width: 90%;
+            padding: 2rem;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 style="text-align: center;">종합심사낙찰가격 예측계산</h1>
+    <table>
+        <tr>
+            <th>기초금액 입력</th>
+            <td><input type="text" id="basePrice" placeholder="기초금액 입력 (원)" oninput="formatPrice(this)" /></td>
+        </tr>
+        <tr>
+            <th>낙찰 하한율 (%)</th>
+            <td>
+                <input type="radio" class="radio-btn" name="lowerBound" value="86.745">86.745%
+                <input type="radio" class="radio-btn" name="lowerBound" value="87.745">87.745%
+                <input type="radio" class="radio-btn" name="lowerBound" value="custom">직접 입력
+                <input type="number" id="customLowerBound" placeholder="직접 입력 (%)" style="width: 100px;" />
+            </td>
+        </tr>
+        <tr>
+            <th>예가 범위 선택</th>
+            <td>
+                <select id="rangeSelector" onchange="toggleCustomRangeInput()">
+                    <option value="0.02">±2%</option>
+                    <option value="0.03">±3%</option>
+                    <option value="0.025">±2.5%</option>
+                    <option value="custom">직접 입력</option>
+                </select>
+                <input type="number" id="customRange" placeholder="직접 입력 (%)" style="width: 100px; display: none;" />
+            </td>
+        </tr>
+        <!-- <tr>
+            <th>A값 입력</th>
+            <td>
+                <input type="text" id="aValue" placeholder="A값 입력 (원)" oninput="formatPrice(this)" />
+                <br>
+                <span style="font-size: 0.9em; color: #666;">* A값이 있는 경우에만 입력하세요.</span>
+            </td>
+        </tr> -->
+        <tr>
+            <th>최저 낙찰가 지정금액</th>
+            <td>
+                <input type="checkbox" id="useSpecificAmount" onchange="toggleSpecificAmountInput()">
+                <input type="text" id="specificAmount" placeholder="최저낙찰가지정금액 (원)" oninput="formatPrice(this)" style="display: none;">
+                <br>
+                <span style="font-size: 0.9em; color: #666;">* 참고사항: 입찰공고중 최저 낙찰가 지정금액이 확정된 경우 체크후 사용하시기 바랍니다.</span>
+            </td>
+        </tr>
+    </table>
+    <div style="text-align: center; margin: 20px 0;">
+        <button class="btn" onclick="calculateAndAutoSelect()" style="font-size: 1.2em; padding: 10px 20px; background-color: #007bff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">입찰가격산출</button>
+    </div>
+    
+    <div style="text-align: center; margin: 20px 0;">
+        <h3>최종투찰금액</h3>
+        <div style="display: flex; justify-content: center; align-items: center; margin: 20px 0;">
+            <div style="border: 2px solid #007bff; border-radius: 10px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <p id="finalPrice" style="font-weight: bold; text-align: center; font-size: 1.5em; color: darkblue; margin: 0;"></p>
+            </div>
+        </div>
+    </div>
+    
+    <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+        <h3 style="color: #007bff; margin-bottom: 15px;">📋 종합심사낙찰가격예측계산 사용설명서</h3>
+        
+        <div style="text-align: left;">
+            <h4 style="color: #495057; margin: 15px 0 10px 0;">1. 기본 정보 입력</h4>
+            <ul style="color: #666; line-height: 1.6;">
+                <li>기초금액: 공고문에 명시된 기초금액을 입력합니다.</li>
+                <li>낙찰 하한율: 공고문에 명시된 낙찰하한율을 선택하거나 직접 입력합니다.</li>
+                <li>예가 범위: 복수예가 산정 범위를 선택합니다. (일반적으로 ±2%)</li>
+            </ul>
+
+            <h4 style="color: #495057; margin: 15px 0 10px 0;">2. 선택 사항</h4>
+            <ul style="color: #666; line-height: 1.6;">
+               
+                <li>최저 낙찰가 지정금액: 입찰공고에 명시된 경우에만 체크 후 입력합니다.</li>
+            </ul>
+
+            <h4 style="color: #495057; margin: 15px 0 10px 0;">3. 결과 확인</h4>
+            <ul style="color: #666; line-height: 1.6;">
+                <li>'입찰가격산출' 버튼을 클릭하면 자동으로 최종투찰금액이 계산됩니다.</li>
+                <li>산출된 복수예비가격 상세보기를 클릭하면 세부 내역을 확인할 수 있습니다.</li>
+            </ul>
+
+            <h4 style="color: #495057; margin: 15px 0 10px 0;">⚠️ 주의사항</h4>
+            <ul style="color: #666; line-height: 1.6;">
+                <li>종합심사 낙찰 가격은 일반공사와, 고난도공사, 실적제한공사로 나눠집니다.</li>
+                <li>일반공사는 공사수행능력점수, 사회적 책임점수, 입찰금액점수및 계약신뢰도 점수를 합산하여 산출됩니다.
+                <li>고난도공사는 공사수행능력점수, 사회적 책임점수, 입찰금액점수(단가 심사점수 및 하도급계획 심사점수, 물량심사점수
+                    및 시공계획 심사점수 포함, 물량심사점수(가점)을 가산하되 배점한도 초과할 수 없음)및 계약신뢰도 점수 합산하여 산출됩니다.
+                </li>
+
+                <li>실제제한공사는 다음 각 호에 따라 점수를 합산하여 종합심사 점수를 산정합니다.</li>
+                1. 추정가격 300억원 이상 : 공사수행능력점수, 사회적 책임점수, 입찰금액점수및 계약신뢰도 점수                                                             
+                2. 추정가격 300억원 미만 : 공사수행능력점수(경영상태점수 포함), 사회적책임점수(공사수행능력점수의 배점한도내에서 가산),
+                                          입찰금액 점수(단가심사점수 및 하도급계획 심사점수 포함) 및 계약신뢰도 점수합산하여 산출됩니다.
+                 <li>종합심사낙찰제는 낙찰금액예측 뿐만 아니라 심사세부기준을 참고하시여 신중히 검토후 접수하시기 바랍니다. </li>
+                                        </ul>
+        </div>
+    </div>
+    
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+    
+    <div class="details-section">
+        <button class="btn-toggle" onclick="toggleDetails()" style="width: 100%; padding: 10px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <span>산출된 복수예비가격 상세보기</span>
+            <span id="toggle-icon">▼</span>
+        </button>
+        <div id="details-content" style="display: none; margin-top: 20px;">
+            <table id="estimateTable">
+                <thead>
+                    <tr>
+                        <th>선택</th>
+                        <th>예비가격 번호</th>
+                        <th>예비가격 (원)</th>
+                        <th>기초금액 대비 비율 (%)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+let estimateList = [];
+let finalPriceElement = document.getElementById('finalPrice');
+
+function formatPrice(input) {
+    let value = input.value.replace(/,/g, '');
+    if (isNaN(value)) return;
+    input.value = Number(value).toLocaleString();
+}
+
+function toggleCustomRangeInput() {
+    const rangeSelector = document.getElementById('rangeSelector');
+    const customRangeInput = document.getElementById('customRange');
+    if (rangeSelector.value === 'custom') {
+        customRangeInput.style.display = 'inline-block';
+    } else {
+        customRangeInput.style.display = 'none';
+    }
+}
+
+function toggleSpecificAmountInput() {
+    const specificAmountInput = document.getElementById('specificAmount');
+    specificAmountInput.style.display = document.getElementById('useSpecificAmount').checked ? 'inline-block' : 'none';
+}
+
+function calculateEstimates() {
+    const basePrice = parseFloat(document.getElementById('basePrice').value.replace(/,/g, ''));
+    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
+    let lowerBound = 0;
+
+    if (!selectedLowerBound) {
+        alert('낙찰 하한율을 선택하거나 입력해주세요.');
+        return;
+    } else if (selectedLowerBound.value === 'custom') {
+        lowerBound = parseFloat(document.getElementById('customLowerBound').value);
+        if (isNaN(lowerBound)) {
+            alert('낙찰 하한율을 입력해주세요.');
+            return;
+        }
+    } else {
+        lowerBound = parseFloat(selectedLowerBound.value);
+    }
+
+    if (isNaN(basePrice)) {
+        alert('기초금액을 입력해주세요.');
+        return;
+    }
+
+    // 예가 범위 선택
+    const rangeSelector = document.getElementById('rangeSelector');
+    let selectedRange = parseFloat(rangeSelector.value);
+    if (rangeSelector.value === 'custom') {
+        selectedRange = parseFloat(document.getElementById('customRange').value) / 100;
+        if (isNaN(selectedRange)) {
+            alert('예가 범위를 입력해주세요.');
+            return;
+        }
+    }
+
+    estimateList = [];
+    for (let i = 0; i < 15; i++) {
+        const variation = Math.random() * (selectedRange * 2) - selectedRange;  // -selectedRange ~ +selectedRange 범위
+        const estimate = basePrice * (1 + variation);
+        estimateList.push(Math.round(estimate));
+    }
+    displayEstimates(estimateList, basePrice);
+}
+
+function displayEstimates(estimateList, basePrice) {
+    const estimateTableBody = document.querySelector('#estimateTable tbody');
+    estimateTableBody.innerHTML = '';
+    estimateList.forEach((estimate, index) => {
+        const rate = ((estimate / basePrice) * 100).toFixed(3);  // 기초금액 대비 비율 소수점 3자리까지 계산
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="checkbox" class="estimate-checkbox" value="${estimate}"></td>
+            <td>${index + 1}</td>
+            <td>${estimate.toLocaleString()} 원</td>
+            <td>${rate}%</td>
+        `;
+        estimateTableBody.appendChild(row);
+    });
+}
+
+function toggleDetails() {
+    const content = document.getElementById('details-content');
+    const icon = document.getElementById('toggle-icon');
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.textContent = '▲';
+    } else {
+        content.style.display = 'none';
+        icon.textContent = '▼';
+    }
+}
+
+function calculateAndAutoSelect() {
+    calculateEstimates();
+    const selectedEstimates = estimateList.slice(0, 4);  // 자동으로 상위 4개의 예비가격 선택
+
+    // 낙찰 하한율 계산
+    const selectedLowerBound = document.querySelector('input[name="lowerBound"]:checked');
+    let lowerBound = 0;
+    if (selectedLowerBound.value === 'custom') {
+        lowerBound = parseFloat(document.getElementById('customLowerBound').value);
+    } else {
+        lowerBound = parseFloat(selectedLowerBound.value);
+    }
+
+    calculateFinalPrice(selectedEstimates, lowerBound, true);
+    
+    // 상위 4개 체크박스 자동 선택
+    const checkboxes = document.querySelectorAll('.estimate-checkbox');
+    checkboxes.forEach((checkbox, index) => {
+        checkbox.checked = index < 4;
+    });
+}
+
+function calculateFinalPrice(estimates, lowerBound, showPopupOnLowPrice = false) {
+    const basePrice = parseFloat(document.getElementById('basePrice').value.replace(/,/g, ''));
+    
+    // 선택된 4개 예비가격의 산술평균 계산
+    const averageEstimate = estimates.reduce((acc, price) => acc + price, 0) / estimates.length;
+
+    // 최종투찰금액 변수 선언
+    let finalPrice;
+
+    // 기초금액 대비 79% ~ 81% 사이의 랜덤 값으로 설정
+    const randomFactor = 0.79 + Math.random() * (0.81 - 0.79);
+    finalPrice = Math.round(averageEstimate * randomFactor);
+
+    // 기초금액보다 70% 이하로 나오지 않도록 조건 추가
+    if (finalPrice < basePrice * 0.7) {
+        finalPrice = Math.round(basePrice * 0.7);
+    }
+
+    // 최종투찰금액에 비율은 기초금액대비 최종투찰금액이 몇%인지로 수정해줘
+    const finalRate = ((finalPrice / basePrice) * 100).toFixed(3);
+    
+    const useSpecificAmount = document.getElementById('useSpecificAmount').checked;
+    const specificAmount = useSpecificAmount ? parseFloat(document.getElementById('specificAmount').value.replace(/,/g, '')) : 0;
+
+    if (useSpecificAmount && finalPrice < specificAmount) {
+        showPopup('산출된 결과값이 특정지정금액보다 작습니다. 다시 산출해주세요.');
+        finalPriceElement.innerText = "재산출 필요";
+        return;
+    }
+
+    if (parseFloat(finalRate) < lowerBound) {
+        finalPriceElement.innerHTML = `${finalPrice.toLocaleString()} 원 (${finalRate}%)`;
+    } else {
+        finalPriceElement.innerHTML = `${finalPrice.toLocaleString()} 원 (${finalRate}%)`;
+    }
+}
+
+function showPopup(message) {
+    // 기존 팝업 제거
+    const existingPopup = document.getElementById('customPopup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+
+    // 새 팝업 생성
+    const popup = document.createElement('div');
+    popup.id = 'customPopup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+    `;
+
+    const messageElement = document.createElement('p');
+    messageElement.textContent = message;
+
+    const closeButton = document.createElement('button');
+    closeButton.textContent = '확인';
+    closeButton.onclick = () => popup.remove();
+    closeButton.style.cssText = `
+        margin-top: 10px;
+        padding: 5px 10px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    `;
+
+    popup.appendChild(messageElement);
+    popup.appendChild(closeButton);
+    document.body.appendChild(popup);
+}
+</script>
+</body>
+</html>
